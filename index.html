@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cybersecurity Log Analyzer - Project Docs & 5-Day Work Division</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        slate: {
+                            50: '#f8fafc',
+                            100: '#f1f5f9',
+                            200: '#e2e8f0',
+                            300: '#cbd5e1',
+                            400: '#94a3b8',
+                            500: '#64748b',
+                            600: '#475569',
+                            700: '#334155',
+                            800: '#1e293b',
+                            900: '#0f172a',
+                        }
+                    }
+                }
+            }
+        };
+    </script>
+    <style>
+        :root {
+            --ink-950: #07111f;
+            --ink-900: #0f172a;
+            --ink-800: #1e293b;
+            --panel: rgba(255, 255, 255, 0.82);
+            --panel-border: rgba(148, 163, 184, 0.22);
+        }
+
+        body {
+            background:
+                radial-gradient(circle at top left, rgba(59, 130, 246, 0.16), transparent 30%),
+                radial-gradient(circle at top right, rgba(16, 185, 129, 0.12), transparent 24%),
+                linear-gradient(180deg, #f8fbff 0%, #eef4f9 42%, #e8eef5 100%);
+        }
+
+        .glass-panel {
+            background: var(--panel);
+            backdrop-filter: blur(14px);
+            border-color: var(--panel-border);
+        }
+
+        .hero-gradient {
+            background:
+                linear-gradient(135deg, rgba(7, 17, 31, 0.98), rgba(15, 118, 110, 0.88)),
+                linear-gradient(135deg, #0f172a 0%, #134e4a 55%, #0f766e 100%);
+        }
+
+        .accent-ring {
+            box-shadow: 0 0 0 1px rgba(148, 163, 184, 0.16), 0 24px 60px rgba(15, 23, 42, 0.12);
+        }
+
+        .task-card {
+            border: 1px solid rgba(148, 163, 184, 0.16);
+            box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+            transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+        }
+
+        .task-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.12);
+            border-color: rgba(15, 118, 110, 0.25);
+        }
+
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white !important; color: black !important; }
+            .print-full { width: 100% !important; margin: 0 !important; padding: 0 !important; }
+            .shadow-sm, .shadow-md, .shadow-lg { box-shadow: none !important; border: 1px solid #e2e8f0 !important; }
+        }
+        .modal-backdrop {
+            background-color: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+        }
+    </style>
+    <script>
+        
+        // Tab switching handler
+        window.switchTab = function(tabId) {
+            var contents = document.querySelectorAll('.tab-content');
+            for (var i = 0; i < contents.length; i++) {
+                contents[i].classList.add('hidden');
+            }
+
+            var buttons = document.querySelectorAll('.tab-btn');
+            for (var j = 0; j < buttons.length; j++) {
+                buttons[j].classList.remove('border-teal-700', 'text-teal-800', 'font-semibold');
+                buttons[j].classList.add('border-transparent', 'text-slate-500', 'font-medium');
+            }
+
+            var targetContent = document.getElementById('content-' + tabId);
+            if (targetContent) {
+                targetContent.classList.remove('hidden');
+            }
+
+            var activeBtn = document.getElementById('tab-' + tabId);
+            if (activeBtn) {
+                activeBtn.classList.remove('border-transparent', 'text-slate-500', 'font-medium');
+                activeBtn.classList.add('border-teal-700', 'text-teal-800', 'font-semibold');
+            }
+        };
+
+        // Comprehensive team progress tracker
+        window.updateProgress = function() {
+            window.syncTaskState();
+
+            var calculateMemberProgress = function(className, progId) {
+                var boxes = document.querySelectorAll('.' + className);
+                var checked = document.querySelectorAll('.' + className + ':checked');
+                var percent = boxes.length > 0 ? Math.round((checked.length / boxes.length) * 100) : 0;
+                var progEl = document.getElementById(progId);
+                if (progEl) {
+                    progEl.innerText = percent + '%';
+                }
+                return { checked: checked.length, total: boxes.length };
+            };
+
+            var m1 = calculateMemberProgress('m1-check', 'm1-prog');
+            var m2 = calculateMemberProgress('m2-check', 'm2-prog');
+            var m3 = calculateMemberProgress('m3-check', 'm3-prog');
+            var m4 = calculateMemberProgress('m4-check', 'm4-prog');
+
+            var totalChecked = m1.checked + m2.checked + m3.checked + m4.checked;
+            var totalBoxes = m1.total + m2.total + m3.total + m4.total;
+            var overallPercent = totalBoxes > 0 ? Math.round((totalChecked / totalBoxes) * 100) : 0;
+
+            var progressBar = document.getElementById('total-progress-bar');
+            var progressText = document.getElementById('total-progress-text');
+            if (progressBar) {
+                progressBar.style.width = overallPercent + '%';
+            }
+            if (progressText) {
+                progressText.innerText = overallPercent + '%';
+            }
+        };
+
+        window.taskStoreKey = 'timeline-task-state-v1';
+
+        window.getStoredTaskState = function() {
+            try {
+                var raw = localStorage.getItem(window.taskStoreKey);
+                return raw ? JSON.parse(raw) : {};
+            } catch (error) {
+                return {};
+            }
+        };
+
+        window.syncTaskState = function() {
+            var storedState = window.getStoredTaskState();
+            var checkboxes = document.querySelectorAll('input[type="checkbox"][data-task-id]');
+            if (checkboxes.length === 0) {
+                return;
+            }
+            var nextState = {};
+
+            for (var i = 0; i < checkboxes.length; i++) {
+                var checkbox = checkboxes[i];
+                var taskId = checkbox.getAttribute('data-task-id');
+                if (!taskId) {
+                    continue;
+                }
+
+                var persistedValue = Object.prototype.hasOwnProperty.call(storedState, taskId)
+                    ? storedState[taskId]
+                    : checkbox.checked;
+                checkbox.checked = !!persistedValue;
+                nextState[taskId] = checkbox.checked;
+            }
+
+            try {
+                localStorage.setItem(window.taskStoreKey, JSON.stringify(nextState));
+            } catch (error) {
+                return;
+            }
+        };
+
+        window.persistTaskState = function() {
+            var checkboxes = document.querySelectorAll('input[type="checkbox"][data-task-id]');
+            var nextState = {};
+
+            for (var i = 0; i < checkboxes.length; i++) {
+                var checkbox = checkboxes[i];
+                var taskId = checkbox.getAttribute('data-task-id');
+                if (taskId) {
+                    nextState[taskId] = checkbox.checked;
+                }
+            }
+
+            try {
+                localStorage.setItem(window.taskStoreKey, JSON.stringify(nextState));
+            } catch (error) {
+                return;
+            }
+        };
+
+        // Data structure for the 5-Day detailed tasks overlay modal
+        window.dayDetails = {
+            1: {
+                title: "Day 1: Setup, Specifications & Synthetic Generator",
+                focus: "Environment configuration, regex parser setup, sample log generator, and project repository structure.",
+                m1: [
+                    "Define standard python log schema dictionary format",
+                    "Write regex parser patterns for SSH auth.log and Nginx access.log in log_parser.py",
+                    "Establish input/output data structure contracts for core modules"
+                ],
+                m2: [
+                    "Design responsive HTML/Tailwind wireframe for web dashboard",
+                    "Create layout components for metric counters and chart placeholders",
+                    "Setup static asset structure (templates/index.html)"
+                ],
+                m3: [
+                    "Develop synthetic log generator script (generate_logs.py) with SSH attack patterns",
+                    "Draft System Architecture and SRS requirements document sections",
+                    "Create initial project repository and testing harness"
+                ],
+                m4: [
+                    "Set up Virtual Environment (venv) and requirements.txt",
+                    "Build main.py CLI runner scaffolding with argparse parameters",
+                    "Establish directory structure (/logs, /reports, /modules)"
+                ]
+            },
+            2: {
+                title: "Day 2: Core Analysis Engine & SQLite Schema",
+                focus: "Authentication analysis rules, threat detection thresholds, SQLite tables, and chart visualization.",
+                m1: [
+                    "Implement auth_analyzer.py for tracking failed vs success user logins",
+                    "Develop threat_detector.py time-window brute force threshold logic (>5 attempts/min)",
+                    "Write IP reputation aggregation helper methods"
+                ],
+                m2: [
+                    "Integrate Chart.js line graph for time-series threat trends",
+                    "Integrate Chart.js doughnut chart for severity breakdown",
+                    "Build dynamic HTML table for real-time log event display"
+                ],
+                m3: [
+                    "Write Pytest unit test suite for log_parser.py regex regex matching edge cases",
+                    "Draft academic presentation deck outline (15 slides)",
+                    "Create sample attack scenarios for threat detection verification"
+                ],
+                m4: [
+                    "Design SQLite schema (logs, alerts, summary tables) in db.py",
+                    "Write database insertion functions for parsed log dictionary arrays",
+                    "Implement database query routines for threat queries"
+                ]
+            },
+            3: {
+                title: "Day 3: Alert Manager, Report Builder & REST API",
+                focus: "Severity prioritization, HTML report generator engine, and Flask backend API endpoints.",
+                m1: [
+                    "Build alert_manager.py for alert severity classification (CRITICAL, HIGH, MED, LOW)",
+                    "Develop report_generator.py for compiling static HTML/JSON reports",
+                    "Implement alert deduplication and filtering logic"
+                ],
+                m2: [
+                    "Implement JavaScript fetch() calls to query Flask REST endpoints",
+                    "Build client-side live alert notification banner feed",
+                    "Create export modal interface for executive report downloads"
+                ],
+                m3: [
+                    "Draft HTML report jinja/string template for report_generator.py",
+                    "Document REST API endpoint specs and request parameters in SRS",
+                    "Write integration unit tests for threat detection triggers"
+                ],
+                m4: [
+                    "Develop app.py Flask web server routes (/api/v1/summary, /api/v1/threats, /api/v1/upload)",
+                    "Connect Flask endpoint handlers to Member 1 engine modules",
+                    "Test multi-part log file upload handling"
+                ]
+            },
+            4: {
+                title: "Day 4: Integration, CLI Polishing & Comprehensive QA",
+                focus: "Full-stack module wiring, CLI terminal runner polish, file upload filters, and end-to-end testing.",
+                m1: [
+                    "Refine heuristic threat thresholds and handle multi-line log edge cases",
+                    "Optimize log parsing loop execution for >10,000 line files",
+                    "Perform code cleanup and docstring documentation across modules"
+                ],
+                m2: [
+                    "Implement dynamic log table search, severity filter dropdowns, and IP search",
+                    "Add drag-and-drop log file uploader widget with feedback animations",
+                    "Refine light theme contrast, padding, and mobile responsiveness"
+                ],
+                m3: [
+                    "Run end-to-end Pytest suite across all 5 Python modules",
+                    "Verify synthetic log detection accuracy and false positive rates",
+                    "Complete final draft of SRS document and API reference manual"
+                ],
+                m4: [
+                    "Polish main.py CLI terminal output with colored status badges and summary tables",
+                    "Write Dockerfile and container deployment configuration",
+                    "Create execution scripts (run_cli.sh, run_web.sh)"
+                ]
+            },
+            5: {
+                title: "Day 5: Final Dry-Run, Slide Deck & Presentation",
+                focus: "Presentation practice, live demonstration setup, technical Q&A preparation, and project submission.",
+                m1: [
+                    "Perform final backend code audit and verify zero external hardware dependencies",
+                    "Assist with technical slide preparation for architecture defense",
+                    "Prepare backend code walkthrough snippets for grading Q&A"
+                ],
+                m2: [
+                    "Conduct UI browser compatibility testing and final aesthetic polish",
+                    "Ensure seamless integration between UI controls and API responses",
+                    "Prepare frontend feature highlight slides"
+                ],
+                m3: [
+                    "Finalize PowerPoint deck with architecture diagrams and sample screenshots",
+                    "Lead presentation flow practice and slide timing rehearsals",
+                    "Compile final submission zip file (Code, SRS Docs, PPT)"
+                ],
+                m4: [
+                    "Lead live demonstration rehearsal (both CLI mode & Web Dashboard mode)",
+                    "Prepare backup demo datasets and pre-loaded SQLite database",
+                    "Coordinate team Q&A response strategy for professor evaluation"
+                ]
+            }
+        };
+
+        // Modal overlay controllers
+        window.openDayModal = function(dayNum) {
+            var data = window.dayDetails[dayNum];
+            if (!data) return;
+
+            window.currentDay = dayNum;
+
+            document.getElementById('modal-title').innerText = data.title;
+            document.getElementById('modal-focus').innerText = data.focus;
+
+            var renderList = function(elementId, items, checkClass, memberKey) {
+                var container = document.getElementById(elementId);
+                if (!container) return;
+                var storedState = window.getStoredTaskState();
+                var html = '<ul class="space-y-1.5 text-xs text-slate-700">';
+                for (var i = 0; i < items.length; i++) {
+                    var taskId = 'day' + dayNum + '-' + memberKey + '-' + (i + 1);
+                    var isChecked = Object.prototype.hasOwnProperty.call(storedState, taskId) ? storedState[taskId] : false;
+                    html += '<li class="flex items-start space-x-2">' +
+                        '<input type="checkbox" data-task-id="' + taskId + '" ' + (isChecked ? 'checked ' : '') + 'onchange="window.persistTaskState(); window.updateProgress()" class="' + checkClass + ' mt-0.5 rounded border-slate-300 text-emerald-700 focus:ring-emerald-500">' +
+                        '<span>' + items[i] + '</span>' +
+                        '</li>';
+                }
+                html += '</ul>';
+                container.innerHTML = html;
+            };
+
+            renderList('modal-m1-list', data.m1, 'm1-check', 'm1');
+            renderList('modal-m2-list', data.m2, 'm2-check', 'm2');
+            renderList('modal-m3-list', data.m3, 'm3-check', 'm3');
+            renderList('modal-m4-list', data.m4, 'm4-check', 'm4');
+
+            var modal = document.getElementById('day-modal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                document.body.classList.add('overflow-hidden');
+            }
+            window.updateProgress();
+        };
+
+        window.closeDayModal = function() {
+            var modal = document.getElementById('day-modal');
+            if (modal) {
+                modal.classList.add('hidden');
+                document.body.classList.remove('overflow-hidden');
+            }
+        };
+
+        // Close modal on Escape key press
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                window.closeDayModal();
+            }
+        });
+    </script>
+</head>
+<body class="text-slate-900 font-sans antialiased min-h-screen flex flex-col">
+
+    <header class="sticky top-0 z-30 no-print">
+        <div class="hero-gradient text-white border-b border-white/10">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
+                <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                    <div class="flex items-center space-x-4">
+                        <div class="p-3 rounded-2xl bg-white/12 border border-white/10 shadow-lg">
+                            <svg class="w-6 h-6 text-cyan-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h1 class="font-bold text-xl leading-tight">Cybersecurity Log Analyzer</h1>
+                            <p class="text-sm text-cyan-100/80 mt-1">CS Senior Academic Project • 5-Day Intensive Schedule & Task Division</p>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-3">
+                        <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-white/12 text-cyan-50 border border-white/15">Python 3.11+ / Flask</span>
+                        <button onclick="window.print()" class="inline-flex items-center space-x-2 px-3 py-1.5 border border-white/15 bg-white/10 hover:bg-white/15 text-white text-xs font-medium rounded-full transition shadow-sm">
+                            <svg class="w-4 h-4 text-cyan-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+                            </svg>
+                            <span>Print Docs</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="glass-panel border-b border-slate-200/60 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <nav class="flex space-x-6 overflow-x-auto" id="tab-nav">
+                <button onclick="window.switchTab('overview')" id="tab-overview" class="tab-btn active border-b-2 border-teal-700 py-3 px-1 text-xs font-semibold text-teal-800 flex items-center space-x-2 whitespace-nowrap">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                    <span>System Overview</span>
+                </button>
+                <button onclick="window.switchTab('team')" id="tab-team" class="tab-btn border-b-2 border-transparent py-3 px-1 text-xs font-medium text-slate-500 hover:text-teal-700 hover:border-teal-300 flex items-center space-x-2 whitespace-nowrap">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                    <span>4-Person Work Division</span>
+                </button>
+                <button onclick="window.switchTab('modules')" id="tab-modules" class="tab-btn border-b-2 border-transparent py-3 px-1 text-xs font-medium text-slate-500 hover:text-teal-700 hover:border-teal-300 flex items-center space-x-2 whitespace-nowrap">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                    <span>5 Core Modules Blueprint</span>
+                </button>
+                <button onclick="window.switchTab('api')" id="tab-api" class="tab-btn border-b-2 border-transparent py-3 px-1 text-xs font-medium text-slate-500 hover:text-teal-700 hover:border-teal-300 flex items-center space-x-2 whitespace-nowrap">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    <span>REST API Explorer</span>
+                </button>
+                <button onclick="window.switchTab('roadmap')" id="tab-roadmap" class="tab-btn border-b-2 border-transparent py-3 px-1 text-xs font-medium text-slate-500 hover:text-teal-700 hover:border-teal-300 flex items-center space-x-2 whitespace-nowrap">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    <span>5-Day Timeline (Click for Popups)</span>
+                </button>
+            </nav>
+        </div>
+    </div>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow w-full">
+
+        <!-- SECTION 1: SYSTEM OVERVIEW -->
+        <div id="content-overview" class="tab-content space-y-6">
+            <div class="bg-white/90 rounded-2xl border border-slate-200 p-6 shadow-sm accent-ring">
+                <div class="md:flex md:items-center md:justify-between border-b border-slate-100 pb-5 mb-5">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">System Architecture & Design Concept</h2>
+                        <p class="text-sm text-slate-500 mt-1">Modular Python core coupled with a lightweight web interface and SQLite persistence.</p>
+                    </div>
+                    <div class="mt-4 md:mt-0 flex space-x-2">
+                        <span class="px-3 py-1 bg-slate-100 border border-slate-200 text-slate-700 text-xs font-mono rounded">Python 3.11</span>
+                        <span class="px-3 py-1 bg-slate-100 border border-slate-200 text-slate-700 text-xs font-mono rounded">Flask API</span>
+                        <span class="px-3 py-1 bg-slate-100 border border-slate-200 text-slate-700 text-xs font-mono rounded">SQLite3</span>
+                    </div>
+                </div>
+
+                <div class="relative overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-slate-950 via-slate-900 to-teal-950 p-6 text-slate-100 shadow-2xl">
+                    <div class="absolute inset-0 opacity-40" aria-hidden="true">
+                        <div class="absolute -top-24 right-0 h-48 w-48 rounded-full bg-cyan-500/20 blur-3xl"></div>
+                        <div class="absolute -bottom-16 left-10 h-40 w-40 rounded-full bg-emerald-400/10 blur-3xl"></div>
+                    </div>
+                    <div class="relative mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4">
+                        <div>
+                            <p class="text-[10px] font-semibold uppercase tracking-[0.35em] text-cyan-200/70">System Flow</p>
+                            <h3 class="mt-1 text-sm font-semibold text-white">Security pipeline from ingestion to reporting</h3>
+                        </div>
+                        <div class="flex flex-wrap gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/75">
+                            <span class="rounded-full border border-white/10 bg-white/5 px-2.5 py-1">Parse</span>
+                            <span class="rounded-full border border-white/10 bg-white/5 px-2.5 py-1">Analyze</span>
+                            <span class="rounded-full border border-white/10 bg-white/5 px-2.5 py-1">Alert</span>
+                            <span class="rounded-full border border-white/10 bg-white/5 px-2.5 py-1">Report</span>
+                        </div>
+                    </div>
+                    <pre class="relative overflow-x-auto font-mono text-[11px] leading-[1.65] text-cyan-50/90 sm:text-xs">
+┌───────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                       USER / BROWSER INTERFACE                                     │
+└────────────────────────────────────────────────┬──────────────────────────────────────────────────┘
+                                                 │ HTTP / REST API
+                                                 ▼
+┌───────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                       app.py (Flask Web Controller)                               │
+└───────┬──────────────────────┬─────────────────────────┬──────────────────────────┬───────────────┘
+        │                      │                         │                          │
+        ▼                      ▼                         ▼                          ▼
+┌──────────────┐      ┌─────────────────┐      ┌──────────────────┐       ┌──────────────────┐
+│  log_parser  │ ───► │  auth_analyzer  │ ───► │  threat_detector │ ────► │  alert_manager   │
+└──────────────┘      └─────────────────┘      └──────────────────┘       └────────┬─────────┘
+        │                                                                          │
+        │                                                                          ▼
+        │                                                                 ┌──────────────────┐
+        └───────────────────────────────────────────────────────────────► │ report_generator │
+                                                                          └────────┬─────────┘
+                                                                                   │
+                                                                                   ▼
+                                                                          ┌──────────────────┐
+                                                                          │ SQLite Database  │
+                                                                          └──────────────────┘
+                    </pre>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold text-slate-500 uppercase">Core Python Modules</span>
+                        <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+                    </div>
+                    <div class="text-2xl font-bold text-slate-900 mt-2">5 Modules</div>
+                    <p class="text-xs text-slate-500 mt-1">Parser, Auth, Threat, Alert, Report</p>
+                </div>
+
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold text-slate-500 uppercase">Supported Log Formats</span>
+                        <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    </div>
+                    <div class="text-2xl font-bold text-slate-900 mt-2">3 Formats</div>
+                    <p class="text-xs text-slate-500 mt-1">Auth.log, Nginx Access, Syslog</p>
+                </div>
+
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold text-slate-500 uppercase">Team Size</span>
+                        <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                    </div>
+                    <div class="text-2xl font-bold text-slate-900 mt-2">4 Members</div>
+                    <p class="text-xs text-slate-500 mt-1">Strict task isolation & deliverables</p>
+                </div>
+
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold text-slate-500 uppercase">Sprint Duration</span>
+                        <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                    <div class="text-2xl font-bold text-slate-900 mt-2">5 Days</div>
+                    <p class="text-xs text-slate-500 mt-1">Accelerated project schedule</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                    <h3 class="font-bold text-slate-900 flex items-center space-x-2">
+                        <svg class="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                        <span>Detection Engine Scope</span>
+                    </h3>
+                    <ul class="text-xs text-slate-600 space-y-2 list-disc list-inside">
+                        <li><strong class="text-slate-800">SSH Brute-Force:</strong> Triggers when failed SSH login attempts exceed threshold (>5 in 60s) from single IP.</li>
+                        <li><strong class="text-slate-800">Web Vulnerability Scans:</strong> Flags SQL Injection (`UNION SELECT`), XSS (`&lt;script&gt;`), and directory traversal (`../`).</li>
+                        <li><strong class="text-slate-800">Anomaly Detection:</strong> Unusually high volume requests per minute and off-hour admin login activity.</li>
+                        <li><strong class="text-slate-800">IP Reputation Score:</strong> Dynamic scoring based on past flag counts within dataset.</li>
+                    </ul>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                    <h3 class="font-bold text-slate-900 flex items-center space-x-2">
+                        <svg class="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <span>Academic Compliance</span>
+                    </h3>
+                    <ul class="text-xs text-slate-600 space-y-2 list-disc list-inside">
+                        <li><strong class="text-slate-800">Modular Architecture:</strong> 5 distinct Python source files separated cleanly from web frameworks.</li>
+                        <li><strong class="text-slate-800">Standalone CLI Option:</strong> Capable of executing pure CLI analysis via `python main.py --log filepath`.</li>
+                        <li><strong class="text-slate-800">Testing Coverage:</strong> Pytest unit tests for log regex parsers and threat detection heuristics.</li>
+                        <li><strong class="text-slate-800">Zero External Hardware:</strong> Runs seamlessly on any standard laptop without complex dependencies.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 2: 4-PERSON WORK DIVISION -->
+        <div id="content-team" class="tab-content hidden space-y-6">
+            <div class="bg-white/90 p-6 rounded-2xl border border-slate-200 shadow-sm accent-ring flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-xl font-bold text-slate-900">4-Person Team Task Division & Accountability Matrix</h2>
+                    <p class="text-sm text-slate-500 mt-1">Each member is directly responsible for specific deliverables and presentation domains.</p>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <span class="text-xs font-semibold text-slate-600">Total Completion:</span>
+                    <div class="w-32 bg-slate-200 rounded-full h-2.5 overflow-hidden">
+                        <div id="total-progress-bar" class="bg-gradient-to-r from-teal-700 to-cyan-500 h-2.5 rounded-full" style="width: 0%"></div>
+                    </div>
+                    <span id="total-progress-text" class="text-xs font-mono font-bold text-slate-800">0%</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+                <!-- MEMBER 1 -->
+                <div class="bg-white/90 rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col task-card">
+                    <div class="p-5 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-teal-50 flex items-center justify-between">
+                        <div>
+                            <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-teal-100 text-teal-900 uppercase">Member 1</span>
+                            <h3 class="text-lg font-bold text-slate-900 mt-1">Backend Developer</h3>
+                            <p class="text-xs text-slate-500">Core Security Engine & Analysis Modules</p>
+                        </div>
+                        <div class="text-right">
+                            <span id="m1-prog" class="text-sm font-mono font-bold text-slate-800">0%</span>
+                            <p class="text-[10px] text-slate-400">Task Progress</p>
+                        </div>
+                    </div>
+                    <div class="p-5 space-y-4 flex-grow">
+                        <div>
+                            <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Primary Deliverables</h4>
+                            <ul class="text-xs text-slate-600 space-y-1.5 list-disc list-inside">
+                                <li>`log_parser.py`: Regex extraction for Apache/Nginx, Auth.log, Syslog.</li>
+                                <li>`auth_analyzer.py`: Tracks failed vs success ratios and session durations.</li>
+                                <li>`threat_detector.py`: Heuristic rules for brute force, port scans, SQLi.</li>
+                                <li>`alert_manager.py`: Alert classification (LOW, MED, HIGH, CRITICAL).</li>
+                                <li>`report_generator.py`: Generates HTML/JSON reports from database query results.</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Interactive Task Checklist</h4>
+                            <div class="space-y-2">
+                                <label class="flex items-start space-x-2 text-xs text-slate-700 cursor-pointer">
+                                    <input type="checkbox" onchange="window.updateProgress()" class="m1-check mt-0.5 rounded border-slate-300 text-slate-900 focus:ring-slate-500">
+                                    <span>Write regex patterns for SSH auth logs and Web access logs</span>
+                                </label>
+                                <label class="flex items-start space-x-2 text-xs text-slate-700 cursor-pointer">
+                                    <input type="checkbox" onchange="window.updateProgress()" class="m1-check mt-0.5 rounded border-slate-300 text-slate-900 focus:ring-slate-500">
+                                    <span>Implement time-window based brute force threshold algorithm</span>
+                                </label>
+                                <label class="flex items-start space-x-2 text-xs text-slate-700 cursor-pointer">
+                                    <input type="checkbox" onchange="window.updateProgress()" class="m1-check mt-0.5 rounded border-slate-300 text-slate-900 focus:ring-slate-500">
+                                    <span>Develop alert severity badge prioritization in alert_manager.py</span>
+                                </label>
+                                <label class="flex items-start space-x-2 text-xs text-slate-700 cursor-pointer">
+                                    <input type="checkbox" onchange="window.updateProgress()" class="m1-check mt-0.5 rounded border-slate-300 text-slate-900 focus:ring-slate-500">
+                                    <span>Build HTML/JSON report compiler in report_generator.py</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MEMBER 2 -->
+                <div class="bg-white/90 rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col task-card">
+                    <div class="p-5 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-cyan-50 flex items-center justify-between">
+                        <div>
+                            <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-cyan-100 text-cyan-900 uppercase">Member 2</span>
+                            <h3 class="text-lg font-bold text-slate-900 mt-1">Frontend Dashboard Developer</h3>
+                            <p class="text-xs text-slate-500">Web UI, Analytics Charts & Data Visualization</p>
+                        </div>
+                        <div class="text-right">
+                            <span id="m2-prog" class="text-sm font-mono font-bold text-slate-800">0%</span>
+                            <p class="text-[10px] text-slate-400">Task Progress</p>
+                        </div>
+                    </div>
+                    <div class="p-5 space-y-4 flex-grow">
+                        <div>
+                            <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Primary Deliverables</h4>
+                            <ul class="text-xs text-slate-600 space-y-1.5 list-disc list-inside">
+                                <li>Single-page Web Dashboard interface (`templates/index.html`).</li>
+                                <li>Chart.js Integration: Threat trends over time & severity breakdown pie chart.</li>
+                                <li>Interactive Log Data Table with IP filter, search, and severity badge status.</li>
+                                <li>File Upload Widget for custom log file parsing trigger.</li>
+                                <li>Live Alert Notifications Feed & Export Report modal interface.</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Interactive Task Checklist</h4>
+                            <div class="space-y-2">
+                                <label class="flex items-start space-x-2 text-xs text-slate-700 cursor-pointer">
+                                    <input type="checkbox" onchange="window.updateProgress()" class="m2-check mt-0.5 rounded border-slate-300 text-slate-900 focus:ring-slate-500">
+                                    <span>Build responsive navbar, summary metrics cards, and sidebar</span>
+                                </label>
+                                <label class="flex items-start space-x-2 text-xs text-slate-700 cursor-pointer">
+                                    <input type="checkbox" onchange="window.updateProgress()" class="m2-check mt-0.5 rounded border-slate-300 text-slate-900 focus:ring-slate-500">
+                                    <span>Integrate Chart.js line and bar charts for log volume metrics</span>
+                                </label>
+                                <label class="flex items-start space-x-2 text-xs text-slate-700 cursor-pointer">
+                                    <input type="checkbox" onchange="window.updateProgress()" class="m2-check mt-0.5 rounded border-slate-300 text-slate-900 focus:ring-slate-500">
+                                    <span>Implement JavaScript `fetch()` calls to Flask REST endpoints</span>
+                                </label>
+                                <label class="flex items-start space-x-2 text-xs text-slate-700 cursor-pointer">
+                                    <input type="checkbox" onchange="window.updateProgress()" class="m2-check mt-0.5 rounded border-slate-300 text-slate-900 focus:ring-slate-500">
+                                    <span>Build client-side search & filtering logic for log events table</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MEMBER 3 -->
+                <div class="bg-white/90 rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col task-card">
+                    <div class="p-5 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-amber-50 flex items-center justify-between">
+                        <div>
+                            <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-900 uppercase">Member 3</span>
+                            <h3 class="text-lg font-bold text-slate-900 mt-1">Docs, PPT & QA Lead</h3>
+                            <p class="text-xs text-slate-500">SRS Document, Presentation Deck & Testing Suite</p>
+                        </div>
+                        <div class="text-right">
+                            <span id="m3-prog" class="text-sm font-mono font-bold text-slate-800">0%</span>
+                            <p class="text-[10px] text-slate-400">Task Progress</p>
+                        </div>
+                    </div>
+                    <div class="p-5 space-y-4 flex-grow">
+                        <div>
+                            <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Primary Deliverables</h4>
+                            <ul class="text-xs text-slate-600 space-y-1.5 list-disc list-inside">
+                                <li>Software Requirements Specification (SRS) & Architecture document.</li>
+                                <li>Final Academic Presentation Slides (15-20 slide PowerPoint deck).</li>
+                                <li>Synthetic Sample Log Dataset Generator script (`generate_logs.py`).</li>
+                                <li>Pytest suite covering regex edge cases and threat detection triggers.</li>
+                                <li>Project README.md, API documentation, and User Manual.</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Interactive Task Checklist</h4>
+                            <div class="space-y-2">
+                                <label class="flex items-start space-x-2 text-xs text-slate-700 cursor-pointer">
+                                    <input type="checkbox" onchange="window.updateProgress()" class="m3-check mt-0.5 rounded border-slate-300 text-slate-900 focus:ring-slate-500">
+                                    <span>Write synthetic log generator producing SSH attacks & normal traffic</span>
+                                </label>
+                                <label class="flex items-start space-x-2 text-xs text-slate-700 cursor-pointer">
+                                    <input type="checkbox" onchange="window.updateProgress()" class="m3-check mt-0.5 rounded border-slate-300 text-slate-900 focus:ring-slate-500">
+                                    <span>Construct unit test suite for log parsers and detection threshold</span>
+                                </label>
+                                <label class="flex items-start space-x-2 text-xs text-slate-700 cursor-pointer">
+                                    <input type="checkbox" onchange="window.updateProgress()" class="m3-check mt-0.5 rounded border-slate-300 text-slate-900 focus:ring-slate-500">
+                                    <span>Design polished PowerPoint presentation structure and slides</span>
+                                </label>
+                                <label class="flex items-start space-x-2 text-xs text-slate-700 cursor-pointer">
+                                    <input type="checkbox" onchange="window.updateProgress()" class="m3-check mt-0.5 rounded border-slate-300 text-slate-900 focus:ring-slate-500">
+                                    <span>Compile complete SRS report including API specs and usage guide</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MEMBER 4 -->
+                <div class="bg-white/90 rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col task-card">
+                    <div class="p-5 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-emerald-50 flex items-center justify-between">
+                        <div>
+                            <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-900 uppercase">Member 4</span>
+                            <h3 class="text-lg font-bold text-slate-900 mt-1">Integration Specialist & Co-Presenter</h3>
+                            <p class="text-xs text-slate-500">Full-Stack Support, Deployment & Live Demo Facilitator</p>
+                        </div>
+                        <div class="text-right">
+                            <span id="m4-prog" class="text-sm font-mono font-bold text-slate-800">0%</span>
+                            <p class="text-[10px] text-slate-400">Task Progress</p>
+                        </div>
+                    </div>
+                    <div class="p-5 space-y-4 flex-grow">
+                        <div>
+                            <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Primary Deliverables</h4>
+                            <ul class="text-xs text-slate-600 space-y-1.5 list-disc list-inside">
+                                <li>End-to-End full stack integration support between core engine & web UI.</li>
+                                <li>Deployment Setup: `requirements.txt`, Dockerfile, virtualenv guides.</li>
+                                <li>CLI Utility (`main.py`) for standalone terminal-based log evaluation.</li>
+                                <li>Live Presentation Demo Script and scenario orchestration during grading.</li>
+                                <li>Presentation backup lead & live Q&A technical handler.</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Interactive Task Checklist</h4>
+                            <div class="space-y-2">
+                                <label class="flex items-start space-x-2 text-xs text-slate-700 cursor-pointer">
+                                    <input type="checkbox" onchange="window.updateProgress()" class="m4-check mt-0.5 rounded border-slate-300 text-slate-900 focus:ring-slate-500">
+                                    <span>Build `main.py` CLI runner for standard console output analysis</span>
+                                </label>
+                                <label class="flex items-start space-x-2 text-xs text-slate-700 cursor-pointer">
+                                    <input type="checkbox" onchange="window.updateProgress()" class="m4-check mt-0.5 rounded border-slate-300 text-slate-900 focus:ring-slate-500">
+                                    <span>Connect Flask routing endpoints to Member 1 engine functions</span>
+                                </label>
+                                <label class="flex items-start space-x-2 text-xs text-slate-700 cursor-pointer">
+                                    <input type="checkbox" onchange="window.updateProgress()" class="m4-check mt-0.5 rounded border-slate-300 text-slate-900 focus:ring-slate-500">
+                                    <span>Package application using standard python `venv` and Dockerfile</span>
+                                </label>
+                                <label class="flex items-start space-x-2 text-xs text-slate-700 cursor-pointer">
+                                    <input type="checkbox" onchange="window.updateProgress()" class="m4-check mt-0.5 rounded border-slate-300 text-slate-900 focus:ring-slate-500">
+                                    <span>Conduct dry-run live demonstration and refine Q&A talking points</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- SECTION 3: 5 CORE MODULES BLUEPRINT -->
+        <div id="content-modules" class="tab-content hidden space-y-6">
+            <div class="bg-white/90 p-6 rounded-2xl border border-slate-200 shadow-sm accent-ring">
+                <h2 class="text-xl font-bold text-slate-900">Python Architecture: 5 Core Modules Breakdown</h2>
+                <p class="text-sm text-slate-500 mt-1">Each module functions independently for pure CLI execution or integrates via `app.py` web service.</p>
+            </div>
+
+            <div class="space-y-4">
+                <div class="bg-white/90 rounded-2xl border border-slate-200 p-5 shadow-sm accent-ring">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-3">
+                        <div class="flex items-center space-x-3">
+                            <span class="font-mono text-xs font-bold px-2.5 py-1 bg-slate-900 text-white rounded">log_parser.py</span>
+                            <h3 class="font-bold text-slate-900 text-sm">Module 1: Log Parser Engine</h3>
+                        </div>
+                        <span class="text-xs text-slate-500 font-mono">Assigned to: Member 1</span>
+                    </div>
+                    <p class="text-xs text-slate-600 mb-3">Reads raw log streams, identifies format, executes regular expression extraction, and converts unstructured log strings into normalized Python dictionaries.</p>
+                    <div class="bg-slate-900 text-slate-200 p-3 rounded font-mono text-[11px] overflow-x-auto">
+                        <span class="text-slate-500"># Function signature</span><br>
+                        <span class="text-blue-400">def</span> <span class="text-green-400">parse_log_line</span>(line: str) -> dict:<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;<span class="text-slate-400">""" Returns: {'timestamp': '...', 'ip': '192.168.1.1', 'action': 'FAILED_LOGIN', ...} """</span>
+                    </div>
+                </div>
+
+                <div class="bg-white/90 rounded-2xl border border-slate-200 p-5 shadow-sm accent-ring">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-3">
+                        <div class="flex items-center space-x-3">
+                            <span class="font-mono text-xs font-bold px-2.5 py-1 bg-slate-900 text-white rounded">auth_analyzer.py</span>
+                            <h3 class="font-bold text-slate-900 text-sm">Module 2: Authentication Security Analyzer</h3>
+                        </div>
+                        <span class="text-xs text-slate-500 font-mono">Assigned to: Member 1</span>
+                    </div>
+                    <p class="text-xs text-slate-600 mb-3">Aggregates authentication attempts, flags suspicious user accounts (e.g. root/admin target attempts), and builds IP-to-user mappings.</p>
+                    <div class="bg-slate-900 text-slate-200 p-3 rounded font-mono text-[11px] overflow-x-auto">
+                        <span class="text-slate-500"># Function signature</span><br>
+                        <span class="text-blue-400">def</span> <span class="text-green-400">analyze_authentication</span>(parsed_events: list) -> dict:<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;<span class="text-slate-400">""" Aggregates failed/success ratios per IP and target account """</span>
+                    </div>
+                </div>
+
+                <div class="bg-white/90 rounded-2xl border border-slate-200 p-5 shadow-sm accent-ring">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-3">
+                        <div class="flex items-center space-x-3">
+                            <span class="font-mono text-xs font-bold px-2.5 py-1 bg-slate-900 text-white rounded">threat_detector.py</span>
+                            <h3 class="font-bold text-slate-900 text-sm">Module 3: Threat Detection Engine</h3>
+                        </div>
+                        <span class="text-xs text-slate-500 font-mono">Assigned to: Member 1</span>
+                    </div>
+                    <p class="text-xs text-slate-600 mb-3">Applies heuristic rules (threshold detection, time-series clustering) to flag security incidents like brute-force attacks and port scans.</p>
+                    <div class="bg-slate-900 text-slate-200 p-3 rounded font-mono text-[11px] overflow-x-auto">
+                        <span class="text-slate-500"># Function signature</span><br>
+                        <span class="text-blue-400">def</span> <span class="text-green-400">detect_threats</span>(events: list, threshold: int = 5) -> list:<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;<span class="text-slate-400">""" Identifies IPs exceeding threshold in window and returns security alerts """</span>
+                    </div>
+                </div>
+
+                <div class="bg-white/90 rounded-2xl border border-slate-200 p-5 shadow-sm accent-ring">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-3">
+                        <div class="flex items-center space-x-3">
+                            <span class="font-mono text-xs font-bold px-2.5 py-1 bg-slate-900 text-white rounded">alert_manager.py</span>
+                            <h3 class="font-bold text-slate-900 text-sm">Module 4: Alert Manager & Prioritization</h3>
+                        </div>
+                        <span class="text-xs text-slate-500 font-mono">Assigned to: Member 1</span>
+                    </div>
+                    <p class="text-xs text-slate-600 mb-3">Sorts and categorizes detected threats by severity (CRITICAL, HIGH, MEDIUM, LOW), deduplicates alerts, and formats alert output payloads.</p>
+                    <div class="bg-slate-900 text-slate-200 p-3 rounded font-mono text-[11px] overflow-x-auto">
+                        <span class="text-slate-500"># Function signature</span><br>
+                        <span class="text-blue-400">def</span> <span class="text-green-400">process_alerts</span>(raw_threats: list) -> list:<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;<span class="text-slate-400">""" Assigns severity badges and filters out duplicate alerts """</span>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-3">
+                        <div class="flex items-center space-x-3">
+                            <span class="font-mono text-xs font-bold px-2.5 py-1 bg-slate-900 text-white rounded">report_generator.py</span>
+                            <h3 class="font-bold text-slate-900 text-sm">Module 5: Security Report Generator</h3>
+                        </div>
+                        <span class="text-xs text-slate-500 font-mono">Assigned to: Member 1</span>
+                    </div>
+                    <p class="text-xs text-slate-600 mb-3">Compiles full analysis data into clean, self-contained HTML executive reports and JSON summaries saved to the `/reports` directory.</p>
+                    <div class="bg-slate-900 text-slate-200 p-3 rounded font-mono text-[11px] overflow-x-auto">
+                        <span class="text-slate-500"># Function signature</span><br>
+                        <span class="text-blue-400">def</span> <span class="text-green-400">generate_html_report</span>(summary_data: dict, output_filepath: str) -> str:<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;<span class="text-slate-400">""" Renders report template and writes security report file """</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 4: REST API EXPLORER -->
+        <div id="content-api" class="tab-content hidden space-y-6">
+            <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                <h2 class="text-xl font-bold text-slate-900">Flask REST API Endpoint Specifications</h2>
+                <p class="text-sm text-slate-500 mt-1">Inter-module communication interface connecting `app.py` backend with the Web Dashboard.</p>
+            </div>
+
+                <div class="bg-white/90 rounded-2xl border border-slate-200 overflow-hidden shadow-sm accent-ring">
+                <div class="p-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+                    <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">Interactive API Documentation</span>
+                    <span class="text-xs text-slate-500">Base URL: <code class="bg-slate-200 px-1.5 py-0.5 rounded text-slate-800">http://localhost:5000</code></span>
+                </div>
+                <div class="divide-y divide-slate-200">
+                    <div class="p-5 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <span class="px-2 py-1 bg-green-100 text-green-800 font-mono font-bold text-xs rounded">GET</span>
+                                <span class="font-mono text-sm font-semibold text-slate-900">/api/v1/summary</span>
+                            </div>
+                            <span class="text-xs text-slate-500">Dashboard Metrics</span>
+                        </div>
+                        <p class="text-xs text-slate-600">Returns aggregate counts for total events, threat alerts, critical items, and unique malicious IPs.</p>
+                        <div class="bg-slate-900 text-slate-200 p-3 rounded font-mono text-[11px]">
+                            { "total_events": 18420, "total_threats": 47, "critical_threats": 6, "unique_ips": 23 }
+                        </div>
+                    </div>
+
+                    <div class="p-5 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <span class="px-2 py-1 bg-blue-100 text-blue-800 font-mono font-bold text-xs rounded">POST</span>
+                                <span class="font-mono text-sm font-semibold text-slate-900">/api/v1/upload</span>
+                            </div>
+                            <span class="text-xs text-slate-500">Log File Ingestion</span>
+                        </div>
+                        <p class="text-xs text-slate-600">Accepts log file upload via standard `multipart/form-data`, triggers parser engine and stores results in SQLite.</p>
+                        <div class="bg-slate-900 text-slate-200 p-3 rounded font-mono text-[11px]">
+                            { "status": "success", "filename": "auth.log", "parsed_events": 1420, "threats_detected": 12 }
+                        </div>
+                    </div>
+
+                    <div class="p-5 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <span class="px-2 py-1 bg-green-100 text-green-800 font-mono font-bold text-xs rounded">GET</span>
+                                <span class="font-mono text-sm font-semibold text-slate-900">/api/v1/threats</span>
+                            </div>
+                            <span class="text-xs text-slate-500">Threat Alerts List</span>
+                        </div>
+                        <p class="text-xs text-slate-600">Returns list of flagged security incidents filtered optionally by IP or severity level query string parameters.</p>
+                        <div class="bg-slate-900 text-slate-200 p-3 rounded font-mono text-[11px]">
+                            [ { "id": 1, "type": "Brute-force SSH", "ip": "192.168.1.50", "severity": "CRITICAL", "attempts": 37 } ]
+                        </div>
+                    </div>
+
+                    <div class="p-5 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <span class="px-2 py-1 bg-green-100 text-green-800 font-mono font-bold text-xs rounded">GET</span>
+                                <span class="font-mono text-sm font-semibold text-slate-900">/api/v1/export/report</span>
+                            </div>
+                            <span class="text-xs text-slate-500">Executive Report Download</span>
+                        </div>
+                        <p class="text-xs text-slate-600">Invokes `report_generator.py` to compile current analysis into a downloadable HTML or JSON report file.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 5: 5-DAY IMPLEMENTATION TIMELINE WITH OVERLAY POPUP -->
+        <div id="content-roadmap" class="tab-content hidden space-y-6">
+            <div class="bg-white/90 p-6 rounded-2xl border border-slate-200 shadow-sm accent-ring flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-xl font-bold text-slate-900">5-Day Intensive Implementation Schedule</h2>
+                    <p class="text-sm text-slate-500 mt-1">Click on any day card below to open the interactive team member task checklist overlay.</p>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <span class="px-3 py-1.5 bg-gradient-to-r from-teal-900 to-cyan-700 text-white text-xs font-medium rounded-full flex items-center space-x-2 shadow-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"></path></svg>
+                        <span>Interactive Popup Enabled</span>
+                    </span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                
+                <!-- DAY 1 CARD -->
+                <div onclick="window.openDayModal(1)" class="bg-white/90 hover:bg-white border border-slate-200 hover:border-teal-300 p-5 rounded-2xl transition cursor-pointer shadow-sm group flex flex-col justify-between task-card">
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="px-2 py-0.5 bg-teal-900 text-white font-mono text-[10px] font-bold rounded-full">DAY 1</span>
+                            <span class="text-xs text-slate-400 group-hover:text-slate-600">Click details →</span>
+                        </div>
+                        <h3 class="font-bold text-slate-900 text-sm mb-1 group-hover:text-black">Setup & Synthetic Data</h3>
+                        <p class="text-xs text-slate-500 line-clamp-3">Environment setup, log schema design, sample generator, and HTML wireframe.</p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center text-[11px] text-slate-600">
+                        <span class="font-medium">4 Member Tasks</span>
+                        <svg class="w-4 h-4 text-slate-400 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </div>
+                </div>
+
+                <!-- DAY 2 CARD -->
+                <div onclick="window.openDayModal(2)" class="bg-white/90 hover:bg-white border border-slate-200 hover:border-teal-300 p-5 rounded-2xl transition cursor-pointer shadow-sm group flex flex-col justify-between task-card">
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="px-2 py-0.5 bg-cyan-900 text-white font-mono text-[10px] font-bold rounded-full">DAY 2</span>
+                            <span class="text-xs text-slate-400 group-hover:text-slate-600">Click details →</span>
+                        </div>
+                        <h3 class="font-bold text-slate-900 text-sm mb-1 group-hover:text-black">Analysis & Database</h3>
+                        <p class="text-xs text-slate-500 line-clamp-3">Auth analyzer, threat detection heuristics, Chart.js trends, SQLite schema.</p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center text-[11px] text-slate-600">
+                        <span class="font-medium">4 Member Tasks</span>
+                        <svg class="w-4 h-4 text-slate-400 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </div>
+                </div>
+
+                <!-- DAY 3 CARD -->
+                <div onclick="window.openDayModal(3)" class="bg-white/90 hover:bg-white border border-slate-200 hover:border-teal-300 p-5 rounded-2xl transition cursor-pointer shadow-sm group flex flex-col justify-between task-card">
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="px-2 py-0.5 bg-slate-900 text-white font-mono text-[10px] font-bold rounded-full">DAY 3</span>
+                            <span class="text-xs text-slate-400 group-hover:text-slate-600">Click details →</span>
+                        </div>
+                        <h3 class="font-bold text-slate-900 text-sm mb-1 group-hover:text-black">Alerts, Reports & API</h3>
+                        <p class="text-xs text-slate-500 line-clamp-3">Alert manager, report builder, REST API endpoints, JS fetch wiring.</p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center text-[11px] text-slate-600">
+                        <span class="font-medium">4 Member Tasks</span>
+                        <svg class="w-4 h-4 text-slate-400 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </div>
+                </div>
+
+                <!-- DAY 4 CARD -->
+                <div onclick="window.openDayModal(4)" class="bg-white/90 hover:bg-white border border-slate-200 hover:border-teal-300 p-5 rounded-2xl transition cursor-pointer shadow-sm group flex flex-col justify-between task-card">
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="px-2 py-0.5 bg-emerald-900 text-white font-mono text-[10px] font-bold rounded-full">DAY 4</span>
+                            <span class="text-xs text-slate-400 group-hover:text-slate-600">Click details →</span>
+                        </div>
+                        <h3 class="font-bold text-slate-900 text-sm mb-1 group-hover:text-black">Integration & CLI Polish</h3>
+                        <p class="text-xs text-slate-500 line-clamp-3">CLI main.py runner, file upload widget, Pytest verification, Dockerfile.</p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center text-[11px] text-slate-600">
+                        <span class="font-medium">4 Member Tasks</span>
+                        <svg class="w-4 h-4 text-slate-400 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </div>
+                </div>
+
+                <!-- DAY 5 CARD -->
+                <div onclick="window.openDayModal(5)" class="bg-white/90 hover:bg-white border border-slate-200 hover:border-teal-300 p-5 rounded-2xl transition cursor-pointer shadow-sm group flex flex-col justify-between task-card">
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="px-2 py-0.5 bg-amber-900 text-white font-mono text-[10px] font-bold rounded-full">DAY 5</span>
+                            <span class="text-xs text-slate-400 group-hover:text-slate-600">Click details →</span>
+                        </div>
+                        <h3 class="font-bold text-slate-900 text-sm mb-1 group-hover:text-black">Dry-Run & Presentation</h3>
+                        <p class="text-xs text-slate-500 line-clamp-3">Slide deck polish, live demo dry-runs, technical defense strategy, code submission.</p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center text-[11px] text-slate-600">
+                        <span class="font-medium">4 Member Tasks</span>
+                        <svg class="w-4 h-4 text-slate-400 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- TIMELINE VERBOSE DETAIL LISTING -->
+            <div class="bg-white/90 p-6 rounded-2xl border border-slate-200 shadow-sm accent-ring space-y-6">
+                <h3 class="font-bold text-slate-900 text-base">Day-by-Day Comprehensive Breakdown</h3>
+                <div class="space-y-6">
+                    <div class="border-l-2 border-slate-900 pl-4 space-y-1">
+                        <div class="flex items-center space-x-2">
+                            <span class="font-mono text-xs font-bold text-slate-900">DAY 1:</span>
+                            <h4 class="font-bold text-slate-800 text-sm">System Specifications & Synthetic Generator</h4>
+                        </div>
+                        <p class="text-xs text-slate-600">Kickoff meeting to establish data exchange formats. Member 1 writes regex specifications for parser functions. Member 3 delivers `generate_logs.py` to create sample datasets containing standard SSH login traffic alongside brute-force attack signatures.</p>
+                    </div>
+
+                    <div class="border-l-2 border-slate-900 pl-4 space-y-1">
+                        <div class="flex items-center space-x-2">
+                            <span class="font-mono text-xs font-bold text-slate-900">DAY 2:</span>
+                            <h4 class="font-bold text-slate-800 text-sm">Analysis Heuristics & SQLite Database Layer</h4>
+                        </div>
+                        <p class="text-xs text-slate-600">Member 1 implements `auth_analyzer.py` and sliding-window logic in `threat_detector.py`. Member 4 creates SQLite database tables (`db.py`) to persist log records. Member 2 integrates Chart.js for real-time visualization.</p>
+                    </div>
+
+                    <div class="border-l-2 border-slate-900 pl-4 space-y-1">
+                        <div class="flex items-center space-x-2">
+                            <span class="font-mono text-xs font-bold text-slate-900">DAY 3:</span>
+                            <h4 class="font-bold text-slate-800 text-sm">Alert Prioritization, Report Builder & REST API</h4>
+                        </div>
+                        <p class="text-xs text-slate-600">Member 1 builds `alert_manager.py` for alert ranking and `report_generator.py` for HTML outputs. Member 4 connects backend modules to Flask REST endpoints (`app.py`). Member 2 wires frontend buttons to REST endpoints using JavaScript `fetch()`.</p>
+                    </div>
+
+                    <div class="border-l-2 border-slate-900 pl-4 space-y-1">
+                        <div class="flex items-center space-x-2">
+                            <span class="font-mono text-xs font-bold text-slate-900">DAY 4:</span>
+                            <h4 class="font-bold text-slate-800 text-sm">Full-Stack Integration, CLI Runner & Testing</h4>
+                        </div>
+                        <p class="text-xs text-slate-600">Member 4 finalizes `main.py` CLI runner for console execution. Member 3 executes the complete Pytest suite on raw log parsing and boundary conditions. Member 2 adds search/filter logic to the Web table.</p>
+                    </div>
+
+                    <div class="border-l-2 border-slate-900 pl-4 space-y-1">
+                        <div class="flex items-center space-x-2">
+                            <span class="font-mono text-xs font-bold text-slate-900">DAY 5:</span>
+                            <h4 class="font-bold text-slate-800 text-sm">Dry-Run Rehearsal, PowerPoint Polish & Grading Defense</h4>
+                        </div>
+                        <p class="text-xs text-slate-600">All members conduct dry-runs of the live demonstration. Member 3 leads slide deck presentation polish. Member 4 verifies zero external dependencies and packages the final submission bundle.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <div id="day-modal" class="fixed inset-0 z-50 hidden overflow-y-auto no-print">
+        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <div onclick="window.closeDayModal()" class="fixed inset-0 transition-opacity modal-backdrop"></div>
+
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+            <div class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl sm:w-full border border-slate-200 accent-ring">
+                <div class="bg-gradient-to-r from-slate-950 via-slate-900 to-teal-900 px-6 py-4 text-white flex justify-between items-center">
+                    <div>
+                        <h3 id="modal-title" class="text-lg font-bold leading-6">Day Details</h3>
+                        <p id="modal-focus" class="text-xs text-slate-300 mt-1">Focus summary</p>
+                    </div>
+                    <button onclick="window.closeDayModal()" class="text-slate-400 hover:text-white transition">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+
+                <div class="p-6 space-y-6 max-h-[70vh] overflow-y-auto bg-gradient-to-b from-white to-slate-50">
+                    <!-- MEMBER 1 TASKS -->
+                    <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="px-2 py-0.5 bg-slate-900 text-white font-mono text-[10px] font-bold rounded">MEMBER 1</span>
+                            <span class="text-xs font-semibold text-slate-700">Backend Core Modules</span>
+                        </div>
+                        <div id="modal-m1-list"></div>
+                    </div>
+
+                    <!-- MEMBER 2 TASKS -->
+                    <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="px-2 py-0.5 bg-slate-900 text-white font-mono text-[10px] font-bold rounded">MEMBER 2</span>
+                            <span class="text-xs font-semibold text-slate-700">Frontend Dashboard UI</span>
+                        </div>
+                        <div id="modal-m2-list"></div>
+                    </div>
+
+                    <!-- MEMBER 3 TASKS -->
+                    <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="px-2 py-0.5 bg-slate-900 text-white font-mono text-[10px] font-bold rounded">MEMBER 3</span>
+                            <span class="text-xs font-semibold text-slate-700">Docs, PPT & Pytest QA</span>
+                        </div>
+                        <div id="modal-m3-list"></div>
+                    </div>
+
+                    <!-- MEMBER 4 TASKS -->
+                    <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="px-2 py-0.5 bg-slate-900 text-white font-mono text-[10px] font-bold rounded">MEMBER 4</span>
+                            <span class="text-xs font-semibold text-slate-700">Full-Stack API & CLI Runner</span>
+                        </div>
+                        <div id="modal-m4-list"></div>
+                    </div>
+                </div>
+
+                <div class="bg-slate-100 px-6 py-3 border-t border-slate-200 flex justify-between items-center">
+                    <span class="text-xs text-slate-500">Checkboxes sync automatically with task completion statistics.</span>
+                    <button onclick="window.closeDayModal()" class="px-4 py-1.5 bg-teal-900 hover:bg-teal-800 text-white text-xs font-medium rounded-lg transition">
+                        Done & Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-white/80 border-t border-slate-200 py-6 mt-8 no-print backdrop-blur-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-xs text-slate-500">
+            Cybersecurity Log Analyzer • Senior Academic Computer Science Project • 5-Day Sprint Plan • Progress saved in your browser
+        </div>
+    </footer>
+
+    <script>
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', window.updateProgress);
+        } else {
+            window.updateProgress();
+        }
+    </script>
+</body>
+</html>
