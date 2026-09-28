@@ -34,6 +34,63 @@ except ImportError:  # script import (``python src/main.py``)
 
 RULE_WIDTH = 76
 
+# --------------------------------------------------------------------------- #
+# Terminal colors
+#
+# Off by default when stdout is not a TTY (pipes, files, pytest capture), so
+# redirected output stays clean. Force it with FORCE_COLOR=1, kill it with
+# NO_COLOR=1. Same convention as ripgrep/ls/fzf.
+# --------------------------------------------------------------------------- #
+_RESET = "\033[0m"
+_STYLES = {
+    "bold": "\033[1m",
+    "dim": "\033[2m",
+    "red": "\033[1;31m",
+    "orange": "\033[38;5;208m",
+    "yellow": "\033[38;5;220m",
+    "blue": "\033[38;5;39m",
+    "cyan": "\033[36m",
+    "green": "\033[1;32m",
+}
+SEVERITY_STYLES = {
+    "CRITICAL": "red",
+    "HIGH": "orange",
+    "MEDIUM": "yellow",
+    "LOW": "blue",
+}
+
+
+def color_enabled() -> bool:
+    if os.environ.get("NO_COLOR"):
+        return False
+    if os.environ.get("FORCE_COLOR"):
+        return True
+    return sys.stdout.isatty()
+
+
+def _paint(text: str, style: str, color: bool) -> str:
+    if not color or not style:
+        return text
+    return f"{_STYLES[style]}{text}{_RESET}"
+
+
+def _severity_style(severity: str) -> str:
+    return SEVERITY_STYLES.get(str(severity or "").strip().upper(), "bold")
+
+
+def _risk_style(score: int) -> str:
+    try:
+        value = int(score)
+    except (TypeError, ValueError):
+        return ""
+    if value >= 80:
+        return "red"
+    if value >= 60:
+        return "orange"
+    if value >= 30:
+        return "yellow"
+    return "dim"
+
 
 def build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
@@ -84,7 +141,27 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--quiet", "-q", action="store_true", help="Only print generated report paths."
     )
+    colors = parser.add_mutually_exclusive_group()
+    colors.add_argument(
+        "--color",
+        dest="color",
+        action="store_true",
+        default=None,
+        help="Force colored badges even when stdout is not a terminal.",
+    )
+    colors.add_argument(
+        "--no-color",
+        dest="color",
+        action="store_false",
+        help="Disable colored output (same as NO_COLOR=1).",
+    )
     return parser
+
+
+def _row(label: str, value: str, color: bool, value_style: str = "") -> None:
+    """Aligned ``label    : value`` line with an optionally colored value."""
+    key = _paint("{:<20}: ".format(label), "dim", color)
+    print("  {}{}".format(key, _paint(value, value_style, color) if value_style else value))
 
 
 def _print_summary(
@@ -94,55 +171,97 @@ def _print_summary(
     summary: dict,
     auth_stats: dict,
     top: int,
+    color: bool = False,
 ) -> None:
     severity = summary.get("severity_counts", {})
     riskiest = (summary.get("top_risk_ips") or [{}])[0]
+    rule = _paint("=" * RULE_WIDTH, "cyan", color)
 
-    print("=" * RULE_WIDTH)
-    print("  CYBERSECURITY LOG ANALYZER - EXECUTIVE SUMMARY")
-    print("=" * RULE_WIDTH)
-    print(f"  Log files           : {', '.join(files)}")
-    print(f"  Parsed events       : {summary.get('total_events', len(events))}")
-    print(f"  Unique IPs          : {summary.get('unique_ips', 0)}")
-    print(
-        f"  Auth success/fail   : {auth_stats['successful_logins']}/"
-        f"{auth_stats['failed_logins']} "
-        f"(rate {auth_stats['success_rate']:.0%})"
+    print(rule)
+    print(_paint("  CYBERSECURITY LOG ANALYZER - EXECUTIVE SUMMARY", "bold", color))
+    print(rule)
+    _row("Log files", ", ".join(files), color)
+    _row("Parsed events", str(summary.get("total_events", len(events))), color, "bold")
+    _row("Unique IPs", str(summary.get("unique_ips", 0)), color)
+
+    rate = auth_stats["success_rate"]
+    rate_style = "green" if rate >= 0.9 else ("yellow" if rate >= 0.5 else "red")
+    _row(
+        "Auth success/fail",
+        f"{auth_stats['successful_logins']}/{auth_stats['failed_logins']} "
+        f"(rate {rate:.0%})",
+        color,
+        rate_style,
     )
-    print(
-        f"  Threats detected    : {summary.get('total_threats', len(alerts))}  "
-        f"(CRITICAL {severity.get('CRITICAL', 0)} | HIGH {severity.get('HIGH', 0)} | "
-        f"MEDIUM {severity.get('MEDIUM', 0)} | LOW {severity.get('LOW', 0)})"
+
+    breakdown = " | ".join(
+        "{} {}".format(
+            _paint(name, _severity_style(name), color), severity.get(name, 0)
+        )
+        for name in ("CRITICAL", "HIGH", "MEDIUM", "LOW")
     )
+    _row(
+        "Threats detected",
+        "{}  ({})".format(summary.get("total_threats", len(alerts)), breakdown),
+        color,
+        "bold",
+    )
+
     if riskiest.get("ip"):
-        print(
-            f"  Riskiest IP         : {riskiest['ip']} "
-            f"({riskiest.get('risk_score', 0)}/100)"
+        score = riskiest.get("risk_score", 0)
+        _row(
+            "Riskiest IP",
+            "{} ({}/100)".format(
+                riskiest["ip"], _paint(str(score), _risk_style(score), color)
+            ),
+            color,
         )
     if auth_stats["high_risk_accounts"]:
         names = ", ".join(
             account["user"] for account in auth_stats["high_risk_accounts"][:5]
         )
-        print(f"  High-risk accounts  : {names}")
+        _row("High-risk accounts", names, color, "red")
 
-    print("-" * RULE_WIDTH)
-    print(f"  TOP ALERTS (showing {min(top, len(alerts))} of {len(alerts)})")
+    print(_paint("-" * RULE_WIDTH, "cyan", color))
+    print(
+        _paint(
+            "  TOP ALERTS (showing {} of {})".format(min(top, len(alerts)), len(alerts)),
+            "bold",
+            color,
+        )
+    )
     if not alerts:
         print("  No threats detected.")
     for alert in alerts[:top]:
-        print(
-            f"  [{alert['severity']:<8}] {alert['title']} - {alert['ip']} "
-            f"(risk {alert['risk_score']})"
-        )
+        # Truncate the plain text first so escape codes never eat the budget.
         details = alert["details"]
         if len(details) > RULE_WIDTH - 8:
             details = details[: RULE_WIDTH - 11] + "..."
-        print(f"      {details}")
-    print("=" * RULE_WIDTH)
+        badge = _paint(
+            "[{:<8}]".format(alert["severity"]),
+            _severity_style(alert["severity"]),
+            color,
+        )
+        risk = _paint(str(alert["risk_score"]), _risk_style(alert["risk_score"]), color)
+        print(
+            "  {} {} - {} (risk {})".format(
+                badge, alert["title"], alert["ip"], risk
+            )
+        )
+        print("      {}".format(_paint(details, "dim", color)))
+    print(rule)
+
+
+def _print_report_paths(paths: List[str], color: bool) -> None:
+    print(_paint("  Report(s) written:", "bold", color))
+    for path in paths:
+        print("    {}".format(_paint(path, "green", color)))
+    print(_paint("=" * RULE_WIDTH, "cyan", color))
 
 
 def main(argv: Optional[List[str]] = None) -> int:
     args = build_arg_parser().parse_args(argv)
+    color = color_enabled() if args.color is None else args.color
 
     events: List[dict] = []
     loaded: List[str] = []
@@ -183,7 +302,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             conn.close()
 
     if not args.quiet:
-        _print_summary(loaded, events, alerts, summary, auth_stats, args.top)
+        _print_summary(loaded, events, alerts, summary, auth_stats, args.top, color)
 
     if args.export != "none":
         output_dir = database.resolve_path(
@@ -203,10 +322,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             for path in written:
                 print(path)
         else:
-            print("  Report(s) written:")
-            for path in written:
-                print(f"    {path}")
-            print("=" * RULE_WIDTH)
+            _print_report_paths(written, color)
 
     return 0
 
