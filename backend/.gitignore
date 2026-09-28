@@ -5,3 +5,6 @@ __pycache__/
 instance/
 reports/*
 !reports/.gitkeep
+
+# The root .gitignore ignores *.log; the demo capture is a committed fixture.
+!samples/*.log

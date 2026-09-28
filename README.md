@@ -1,36 +1,65 @@
-# Insha Project Starter
+# Insha — Cybersecurity Log Analyzer
 
-This workspace is now organized into two simple parts:
+Senior project: a log-analysis platform that ingests raw server logs, detects
+threats with heuristic rules, and reports the results through both a REST API
+and a standalone CLI.
 
-- `frontend` for the user interface
-- `backend` for server code, APIs, or data handling
+- `backend/` — Flask REST API, heuristic threat engine, CLI, reports, tests
+- `frontend/` — dashboard UI (not yet built)
+- `index.html` — project landing page, module specs and the API contract
 
-## Folder Layout
+## Quick start
+
+```bash
+cd backend
+python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+cp .env.example .env
+
+./run_web.sh --demo        # REST API on http://127.0.0.1:5000, seeded with demo data
+./run_cli.sh               # or analyze from the terminal, no server needed
+python -m pytest           # 90 tests
+```
+
+Or with Docker:
+
+```bash
+cd backend
+docker compose up --build          # API on http://localhost:5000
+docker compose run --rm cli        # one-shot CLI run
+```
+
+## Folder layout
 
 ```text
 insha/
-├── backend/
-│   └── README.md
-├── frontend/
-│   └── README.md
-├── index.html
-├── .gitignore
-└── README.md
+├── backend/                # see backend/README.md for the full map
+│   ├── src/                # parser, analyzers, threat engine, alerts, reports, API, CLI
+│   ├── tests/              # pytest suite
+│   ├── samples/demo.log    # mixed auth.log + nginx + syslog capture
+│   ├── scripts/            # demo database builder
+│   ├── Dockerfile          # gunicorn image, non-root, HEALTHCHECK
+│   └── run_cli.sh / run_web.sh
+├── frontend/               # dashboard UI
+├── index.html              # landing page + API contract
+└── .gitignore
 ```
 
-## For New Students
+## API contract
 
-Read the README inside each folder first.
-That is the easiest way to understand where your work should go.
+The endpoints the dashboard consumes, all under `http://localhost:5000`:
 
-## Quick Start
+| Method | Endpoint | Returns |
+|--------|----------|---------|
+| GET | `/api/v1/summary` | `{total_events, total_threats, critical_threats, unique_ips}` |
+| POST | `/api/v1/upload` | multipart `file` → `{status, filename, parsed_events, threats_detected, ...}` |
+| GET | `/api/v1/threats?ip=&severity=` | alert list with `badge`, `title`, `risk_score`, `attempts` |
+| GET | `/api/v1/export/report?format=` | `html` or `json` report download |
 
-1. Open `index.html` in a browser to see the current page.
-2. Put UI work in `frontend/`.
-3. Put server work in `backend/`.
-4. Keep secret files and installed packages out of Git by using `.gitignore`.
+Also available: `/api/v1/events`, `/api/v1/stats`, `/api/v1/health`.
 
-## Team Tip
+## For team members
 
-If you are not sure where to add something, start with the README files.
-They are written to be very simple and beginner-friendly.
+Read `backend/README.md` first — it documents every module, the threat rules,
+the database schema and the configuration options. Secrets and local state
+(`.env`, `instance/`, `reports/`, `.venv/`) stay out of Git via `.gitignore`.
