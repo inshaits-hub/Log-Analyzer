@@ -1,0 +1,89 @@
+# ===========================================================================
+# samples/demo.log - synthetic capture used by the docs, the CLI examples
+# and tests/test_cli.py. Three formats in one file, on purpose:
+#
+#   1. Linux auth.log   (syslog framed SSH / PAM events)
+#   2. Nginx access log (Combined Log Format)
+#   3. RFC3164 syslog   (UFW firewall blocks)
+#
+# Nothing here is real data; every IP lives in the RFC 5737 documentation
+# ranges (192.0.2.0/24, 198.51.100.0/24, 203.0.113.0/24) and the internal
+# host uses 10.0.0.0/8.
+#
+# Expected result (default --threshold 5):
+#   36 parsed events, 7 threats
+#   (CRITICAL 1 | HIGH 4 | MEDIUM 2 | LOW 0), riskiest 203.0.113.45 (92/100)
+# ===========================================================================
+
+
+# ---------------------------------------------------------------------------
+# 1. SSH brute force against root, followed by a successful login.
+#    6 failures inside 28s (>5 in 60s) then a success 13s later.
+#    -> SSH_BRUTE_FORCE (HIGH) + SSH_BRUTE_FORCE_SUCCESS (CRITICAL)
+#    35 + 45 + (6 failures x 2) = 92 risk points for 203.0.113.45
+# ---------------------------------------------------------------------------
+Sep 28 14:11:03 web01 sshd[2201]: Failed password for root from 203.0.113.45 port 51001 ssh2
+Sep 28 14:11:07 web01 sshd[2202]: Failed password for root from 203.0.113.45 port 51002 ssh2
+Sep 28 14:11:12 web01 sshd[2203]: Failed password for root from 203.0.113.45 port 51003 ssh2
+Sep 28 14:11:18 web01 sshd[2204]: Failed password for root from 203.0.113.45 port 51004 ssh2
+Sep 28 14:11:24 web01 sshd[2205]: Failed password for root from 203.0.113.45 port 51005 ssh2
+Sep 28 14:11:31 web01 sshd[2206]: Failed password for root from 203.0.113.45 port 51006 ssh2
+Sep 28 14:11:44 web01 sshd[2210]: Accepted password for root from 203.0.113.45 port 51020 ssh2
+
+
+# ---------------------------------------------------------------------------
+# 2. SQL injection + XSS burst from a single scanner.
+#    -> SQL_INJECTION (HIGH, 3 correlated) + XSS_ATTEMPT (MEDIUM)
+# ---------------------------------------------------------------------------
+203.0.113.60 - - [28/Sep/2026:02:14:07 +0000] "GET /index.php?id=1%20UNION%20SELECT%20username%20FROM%20users HTTP/1.1" 404 162 "-" "sqlmap/1.7.2"
+203.0.113.60 - - [28/Sep/2026:02:14:09 +0000] "GET /login.php?user=%27%20OR%20%271%27%3D%271 HTTP/1.1" 200 981 "-" "sqlmap/1.7.2"
+203.0.113.60 - - [28/Sep/2026:02:14:11 +0000] "GET /products.php?id=2%20UNION%20ALL%20SELECT%20NULL,NULL,NULL HTTP/1.1" 500 0 "-" "sqlmap/1.7.2"
+203.0.113.60 - - [28/Sep/2026:02:14:14 +0000] "GET /search?q=<script>alert(1)</script> HTTP/1.1" 200 512 "-" "Mozilla/5.0"
+
+
+# ---------------------------------------------------------------------------
+# 3. Directory traversal for credential files.
+#    -> DIRECTORY_TRAVERSAL (HIGH, 2 correlated)
+# ---------------------------------------------------------------------------
+203.0.113.77 - - [28/Sep/2026:02:16:20 +0000] "GET /download?file=../../../../etc/passwd HTTP/1.1" 403 128 "-" "curl/8.4.0"
+203.0.113.77 - - [28/Sep/2026:02:16:24 +0000] "GET /view?p=..%2f..%2f..%2fboot.ini HTTP/1.1" 403 128 "-" "curl/8.4.0"
+
+
+# ---------------------------------------------------------------------------
+# 4. Port scan: 11 distinct destination ports in 44s, all dropped by UFW.
+#    -> PORT_SCAN (HIGH)
+# ---------------------------------------------------------------------------
+Sep 28 02:18:01 fw01 kernel: [UFW BLOCK] IN=eth0 OUT= MAC=00:11:22:33:44:55 SRC=198.51.100.7 DST=10.0.0.5 PROTO=TCP SPT=51000 DPT=22 WINDOW=1024
+Sep 28 02:18:05 fw01 kernel: [UFW BLOCK] IN=eth0 OUT= MAC=00:11:22:33:44:55 SRC=198.51.100.7 DST=10.0.0.5 PROTO=TCP SPT=51001 DPT=23 WINDOW=1024
+Sep 28 02:18:09 fw01 kernel: [UFW BLOCK] IN=eth0 OUT= MAC=00:11:22:33:44:55 SRC=198.51.100.7 DST=10.0.0.5 PROTO=TCP SPT=51002 DPT=25 WINDOW=1024
+Sep 28 02:18:12 fw01 kernel: [UFW BLOCK] IN=eth0 OUT= MAC=00:11:22:33:44:55 SRC=198.51.100.7 DST=10.0.0.5 PROTO=TCP SPT=51003 DPT=80 WINDOW=1024
+Sep 28 02:18:16 fw01 kernel: [UFW BLOCK] IN=eth0 OUT= MAC=00:11:22:33:44:55 SRC=198.51.100.7 DST=10.0.0.5 PROTO=TCP SPT=51004 DPT=443 WINDOW=1024
+Sep 28 02:18:20 fw01 kernel: [UFW BLOCK] IN=eth0 OUT= MAC=00:11:22:33:44:55 SRC=198.51.100.7 DST=10.0.0.5 PROTO=TCP SPT=51005 DPT=3306 WINDOW=1024
+Sep 28 02:18:23 fw01 kernel: [UFW BLOCK] IN=eth0 OUT= MAC=00:11:22:33:44:55 SRC=198.51.100.7 DST=10.0.0.5 PROTO=TCP SPT=51006 DPT=5432 WINDOW=1024
+Sep 28 02:18:27 fw01 kernel: [UFW BLOCK] IN=eth0 OUT= MAC=00:11:22:33:44:55 SRC=198.51.100.7 DST=10.0.0.5 PROTO=TCP SPT=51007 DPT=3389 WINDOW=1024
+Sep 28 02:18:31 fw01 kernel: [UFW BLOCK] IN=eth0 OUT= MAC=00:11:22:33:44:55 SRC=198.51.100.7 DST=10.0.0.5 PROTO=TCP SPT=51008 DPT=8080 WINDOW=1024
+Sep 28 02:18:36 fw01 kernel: [UFW BLOCK] IN=eth0 OUT= MAC=00:11:22:33:44:55 SRC=198.51.100.7 DST=10.0.0.5 PROTO=TCP SPT=51009 DPT=9200 WINDOW=1024
+Sep 28 02:18:45 fw01 kernel: [UFW BLOCK] IN=eth0 OUT= MAC=00:11:22:33:44:55 SRC=198.51.100.7 DST=10.0.0.5 PROTO=TCP SPT=51010 DPT=27017 WINDOW=1024
+
+
+# ---------------------------------------------------------------------------
+# 5. Administrator console poked at 03:05 local time (inside 00:00-05:59).
+#    -> OFF_HOUR_ADMIN (MEDIUM)
+# ---------------------------------------------------------------------------
+10.0.0.15 - - [28/Sep/2026:03:05:12 +0000] "GET /wp-admin/install.php HTTP/1.1" 200 2048 "-" "Mozilla/5.0"
+10.0.0.15 - - [28/Sep/2026:03:05:44 +0000] "POST /phpmyadmin/index.php HTTP/1.1" 200 512 "-" "Mozilla/5.0"
+
+
+# ---------------------------------------------------------------------------
+# 6. Benign daytime traffic - must stay below every threshold.
+# ---------------------------------------------------------------------------
+10.0.0.15 - - [28/Sep/2026:12:00:01 +0000] "GET / HTTP/1.1" 200 1024 "-" "Mozilla/5.0"
+10.0.0.15 - - [28/Sep/2026:12:00:03 +0000] "GET /assets/app.css HTTP/1.1" 200 4096 "-" "Mozilla/5.0"
+10.0.0.15 - - [28/Sep/2026:12:00:05 +0000] "GET /assets/app.js HTTP/1.1" 200 8821 "-" "Mozilla/5.0"
+10.0.0.15 - - [28/Sep/2026:12:00:08 +0000] "POST /api/v1/login HTTP/1.1" 200 512 "-" "Mozilla/5.0"
+10.0.0.15 - - [28/Sep/2026:12:00:12 +0000] "GET /api/v1/summary HTTP/1.1" 200 256 "-" "Mozilla/5.0"
+203.0.113.80 - - [28/Sep/2026:12:10:22 +0000] "GET /health HTTP/1.1" 200 12 "-" "kube-probe/1.28"
+Sep 28 12:01:00 web01 sshd[2301]: Accepted password for alice from 10.0.0.15 port 51200 ssh2
+Sep 28 12:01:01 web01 sshd[2301]: pam_unix(sshd:session): session opened for user alice by (uid=0)
+Sep 28 12:04:30 web01 sudo: pam_unix(sudo:session): session opened for user root by alice(uid=1000)
+Sep 28 12:05:00 web01 CRON[3001]: (root) CMD (/usr/local/bin/backup-db.sh)
