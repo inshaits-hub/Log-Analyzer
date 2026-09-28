@@ -199,6 +199,10 @@ def create_app(db_path=None, reports_dir=None) -> Flask:
             canonical = alert_manager.normalize_severity(
                 row.get("severity"), row.get("risk_score")
             )
+            try:
+                attempts = max(1, int(row.get("attempts") or 1))
+            except (TypeError, ValueError):
+                attempts = 1
             payload.append(
                 {
                     "id": row.get("id"),
@@ -210,6 +214,7 @@ def create_app(db_path=None, reports_dir=None) -> Flask:
                     "details": row.get("details"),
                     "timestamp": row.get("timestamp"),
                     "risk_score": row.get("risk_score"),
+                    "attempts": attempts,
                 }
             )
         return jsonify(payload)

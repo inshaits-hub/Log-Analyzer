@@ -15,7 +15,15 @@ from typing import Dict, Iterable, List, Optional
 BACKEND_ROOT = Path(__file__).resolve().parent.parent
 
 LOG_COLUMNS = ("timestamp", "ip", "user", "action", "log_type", "raw_line")
-THREAT_COLUMNS = ("type", "ip", "severity", "details", "timestamp", "risk_score")
+THREAT_COLUMNS = (
+    "type",
+    "ip",
+    "severity",
+    "details",
+    "timestamp",
+    "risk_score",
+    "attempts",
+)
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS logs (
@@ -34,7 +42,8 @@ CREATE TABLE IF NOT EXISTS threats (
     severity   TEXT,
     details    TEXT,
     timestamp  TEXT,
-    risk_score INTEGER DEFAULT 0
+    risk_score INTEGER DEFAULT 0,
+    attempts   INTEGER DEFAULT 1
 );
 CREATE TABLE IF NOT EXISTS summary (
     id               INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -90,9 +99,29 @@ def get_connection(db_path=None) -> sqlite3.Connection:
     if not path.is_absolute():
         path = resolve_path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(str(path))
+    conn = sqlite3.connect(str(path), timeout=30)
     conn.row_factory = sqlite3.Row
+    # Flask serves requests on threads and gunicorn runs several workers, so
+    # readers must not block the writer. WAL allows that; busy_timeout makes a
+    # contended write wait instead of raising "database is locked" immediately.
+    try:
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA busy_timeout=30000")
+    except sqlite3.DatabaseError:
+        # In-memory or read-only files reject the pragma; the defaults still work.
+        pass
     return conn
+
+
+def _migrate(conn: sqlite3.Connection) -> None:
+    """Add columns introduced after a database was first created.
+
+    ``CREATE TABLE IF NOT EXISTS`` is a no-op on an existing table, so databases
+    written by an older build keep the old shape until they are altered here.
+    """
+    existing = {row["name"] for row in conn.execute("PRAGMA table_info(threats)")}
+    if existing and "attempts" not in existing:
+        conn.execute("ALTER TABLE threats ADD COLUMN attempts INTEGER DEFAULT 1")
 
 
 def init_db(db_path=None) -> str:
@@ -103,6 +132,7 @@ def init_db(db_path=None) -> str:
     conn = get_connection(path)
     try:
         conn.executescript(SCHEMA)
+        _migrate(conn)
         conn.execute("CREATE INDEX IF NOT EXISTS idx_logs_ip ON logs(ip)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_logs_timestamp ON logs(timestamp)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_threats_ip ON threats(ip)")
@@ -146,6 +176,10 @@ def insert_threats(threats: Iterable[Dict], db_path=None, conn=None) -> int:
     columns = ",".join(THREAT_COLUMNS)
     rows = []
     for threat in threats or []:
+        try:
+            attempts = max(1, int(threat.get("attempts") or threat.get("occurrences") or 1))
+        except (TypeError, ValueError):
+            attempts = 1
         rows.append(
             (
                 threat.get("type"),
@@ -154,6 +188,7 @@ def insert_threats(threats: Iterable[Dict], db_path=None, conn=None) -> int:
                 threat.get("details"),
                 threat.get("timestamp"),
                 int(threat.get("risk_score") or 0),
+                attempts,
             )
         )
     return _write(
