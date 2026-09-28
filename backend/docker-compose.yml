@@ -1,0 +1,68 @@
+# ---------------------------------------------------------------------------
+# docker compose - REST API with persistent state.
+#
+#   docker compose up --build          API on http://localhost:5000
+#   docker compose run --rm cli        analyze the bundled demo capture
+#   docker compose down -v             stop and discard the database
+#
+# Override the bind address for LAN demos:
+#   HOST=0.0.0.0 docker compose up --build
+# ---------------------------------------------------------------------------
+services:
+  api:
+    build: .
+    image: insha-backend
+    container_name: insha-backend-api
+    ports:
+      - "${PORT:-5000}:5000"
+    environment:
+      # 127.0.0.1 keeps the API private to this host; use 0.0.0.0 to expose it.
+      HOST: "0.0.0.0"
+      PORT: "5000"
+      DB_PATH: instance/logs.db
+      REPORTS_DIR: reports
+      ANALYSIS_THRESHOLD: "5"
+      MAX_UPLOAD_MB: "16"
+      # Never ship the debugger: FLASK_ENV=production disables the reloader
+      # and the interactive Werkzeug console.
+      FLASK_ENV: production
+      SECRET_KEY: "${SECRET_KEY:-change-me-in-production}"
+    volumes:
+      # Named volumes so the SQLite database and reports outlive the container.
+      - db-data:/app/instance
+      - reports-data:/app/reports
+    restart: unless-stopped
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - |
+          import os, sys, urllib.request
+          url = "http://127.0.0.1:5000/api/v1/health"
+          sys.exit(0 if urllib.request.urlopen(url, timeout=4).status == 200 else 1)
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+
+  # One-shot: analyze a log file and print the executive summary.
+  #   docker compose run --rm cli
+  #   docker compose run --rm cli --log /logs/auth.log --export json
+  cli:
+    build: .
+    image: insha-backend
+    profiles: ["tools"]
+    environment:
+      DB_PATH: instance/logs.db
+      REPORTS_DIR: reports
+      ANALYSIS_THRESHOLD: "5"
+      FORCE_COLOR: "1"
+    volumes:
+      - db-data:/app/instance
+      - reports-data:/app/reports
+    command: ["python", "src/main.py", "--log", "samples/demo.log", "--export", "both"]
+
+volumes:
+  db-data:
+  reports-data:

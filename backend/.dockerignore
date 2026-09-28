@@ -1,0 +1,20 @@
+# Build context hygiene: keep secrets and host state out of the image.
+.env
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.git/
+.gitignore
+
+# Host state - the image creates these empty.
+instance/
+reports/*
+!reports/.gitkeep
+
+# Local editor/OS noise
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
