@@ -101,6 +101,7 @@ def _build_alert(item: Dict, dedupe_window: int = DEDUPE_WINDOW_SECONDS) -> Dict
     badge = BADGE_COLORS[severity]
     title = title_for(item["type"])
     occurrences = item["occurrences"]
+    attempts = item["attempts"]
     first_seen = (
         item["_first"].isoformat(sep=" ") if item.get("_first") else item["timestamp"]
     )
@@ -130,6 +131,7 @@ def _build_alert(item: Dict, dedupe_window: int = DEDUPE_WINDOW_SECONDS) -> Dict
         "last_seen": last_seen,
         "risk_score": item["risk_score"],
         "occurrences": occurrences,
+        "attempts": attempts,
         "payload": {
             "rule": item["type"],
             "title": title,
@@ -138,6 +140,7 @@ def _build_alert(item: Dict, dedupe_window: int = DEDUPE_WINDOW_SECONDS) -> Dict
             "ip": item["ip"],
             "risk_score": item["risk_score"],
             "occurrences": occurrences,
+            "attempts": attempts,
             "window": {
                 "first_seen": first_seen,
                 "last_seen": last_seen,
@@ -162,6 +165,10 @@ def process_alerts(
         except (TypeError, ValueError):
             risk_score = 0
         moment = parse_timestamp(threat.get("timestamp"))
+        try:
+            attempts = max(1, int(threat.get("attempts") or threat.get("occurrences") or 1))
+        except (TypeError, ValueError):
+            attempts = 1
         item = {
             "type": threat.get("type") or "UNKNOWN",
             "ip": threat.get("ip") or "unknown",
@@ -170,6 +177,7 @@ def process_alerts(
             "timestamp": threat.get("timestamp"),
             "risk_score": risk_score,
             "occurrences": 1,
+            "attempts": attempts,
             "_dt": moment,
             "_first": moment,
             "_last": moment,
@@ -196,6 +204,7 @@ def process_alerts(
             )
             if mergeable:
                 current["occurrences"] += item["occurrences"]
+                current["attempts"] += item["attempts"]
                 current["risk_score"] = max(current["risk_score"], item["risk_score"])
                 if SEVERITY_RANK[item["severity"]] < SEVERITY_RANK[current["severity"]]:
                     current["severity"] = item["severity"]

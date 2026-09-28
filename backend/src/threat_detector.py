@@ -124,7 +124,10 @@ def _timeline(events: Iterable[Dict]) -> List[Tuple[Dict, datetime]]:
     return timeline
 
 
-def _threat(kind: str, ip, severity: str, details: str, moment: datetime) -> Dict:
+def _threat(
+    kind: str, ip, severity: str, details: str, moment: datetime, attempts: int = 1
+) -> Dict:
+    """Build a threat record. ``attempts`` is how many log events fed the rule."""
     return {
         "type": kind,
         "ip": ip,
@@ -132,6 +135,7 @@ def _threat(kind: str, ip, severity: str, details: str, moment: datetime) -> Dic
         "details": details,
         "timestamp": moment.isoformat(sep=" ") if isinstance(moment, datetime) else str(moment),
         "risk_score": 0,
+        "attempts": max(1, int(attempts)),
     }
 
 
@@ -184,7 +188,14 @@ def _detect_brute_force(timeline, threshold: int) -> List[Dict]:
                     f"most targeted users: {top_users}"
                 )
                 threats.append(
-                    _threat("SSH_BRUTE_FORCE", ip, severity, details, segment[0][0])
+                    _threat(
+                        "SSH_BRUTE_FORCE",
+                        ip,
+                        severity,
+                        details,
+                        segment[0][0],
+                        attempts=count,
+                    )
                 )
                 bursts_by_ip[ip].append((segment[0][0], segment[-1][0], count))
                 last_alerted = end
@@ -204,6 +215,7 @@ def _detect_brute_force(timeline, threshold: int) -> List[Dict]:
                         f"{event['ip']} within {BRUTE_FORCE_WINDOW_SECONDS}s of "
                         f"{count} failed attempts",
                         moment,
+                        attempts=count,
                     )
                 )
                 break
@@ -258,10 +270,11 @@ def _detect_anomalies(timeline, spike_threshold: int) -> List[Dict]:
                     "TRAFFIC_SPIKE",
                     ip,
                     severity,
-                    f"{count} HTTP requests in a single minute from {ip} "
-                    f"(threshold: {spike_threshold}/min)",
-                    minute,
-                )
+                        f"{count} HTTP requests in a single minute from {ip} "
+                        f"(threshold: {spike_threshold}/min)",
+                        minute,
+                        attempts=count,
+                    )
             )
 
     for event, moment in timeline:
@@ -335,6 +348,7 @@ def _detect_scans(timeline, web_threshold: int, port_threshold: int) -> List[Dic
                         f"{distinct} distinct URL paths requested from {ip} within "
                         f"{BRUTE_FORCE_WINDOW_SECONDS}s (content/scan activity)",
                         items[start][0],
+                        attempts=distinct,
                     )
                 )
                 last_alerted = end
@@ -358,6 +372,7 @@ def _detect_scans(timeline, web_threshold: int, port_threshold: int) -> List[Dic
                         f"{distinct} distinct destination ports probed from {ip} "
                         f"within {BRUTE_FORCE_WINDOW_SECONDS}s",
                         items[start][0],
+                        attempts=distinct,
                     )
                 )
                 last_alerted = end
