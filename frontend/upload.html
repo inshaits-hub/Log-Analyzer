@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Log Analyzer - Upload</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400;1,700&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="js/tailwind-config.js"></script>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-surface-container-low text-on-surface font-body-md text-body-md antialiased min-h-screen flex flex-col m-0 p-0 selection:bg-primary-container selection:text-on-primary" data-page="upload">
+<div id="app-shell"></div>
+<script src="js/ui/layout.js"></script>
+<main class="w-full max-w-[1440px] mx-auto px-6 py-6 flex-1 flex flex-col">
+<div class="w-full max-w-[720px]">
+<div class="mb-6">
+<h1 class="text-[20px] leading-[26px] font-semibold text-gray-900 mb-1">Upload log file</h1>
+<p class="text-body-md text-gray-600">The file is parsed on the server and checked for known attack patterns.</p>
+</div>
+<div class="bg-surface-container-lowest border border-dashed border-[#8d8d8d] p-8 text-center rounded-none mb-4 transition-colors hover:border-gray-700" id="upload-dropzone">
+<p class="text-body-md text-gray-900 font-normal">
+          Drag a file here or
+          <label class="text-primary-container hover:underline cursor-pointer font-medium ml-1">
+            choose a file
+            <input accept=".log,.txt" class="hidden" id="upload-file-input" type="file"/>
+</label>
+</p>
+<p class="text-body-sm text-gray-500 mt-2">
+          SSH auth.log, Nginx access.log or UFW firewall log. .log or .txt, up to 16 MB.
+        </p>
+</div>
+<div class="mb-6 flex items-center gap-2 text-error text-[13px] leading-[18px] hidden" id="upload-error">
+<span class="material-symbols-outlined text-[15px] shrink-0 text-error">warning</span>
+<span id="upload-error-text"></span>
+</div>
+<div class="bg-surface-container-lowest border border-[#e0e0e0] p-4 mb-4 hidden" id="upload-progress-panel">
+<div class="flex items-baseline justify-between mb-3">
+<div class="flex items-baseline space-x-2">
+<span class="text-body-md font-semibold text-gray-900" id="upload-progress-filename"></span>
+<span class="text-[13px] leading-[18px] text-gray-500 font-code-sm" id="upload-progress-filesize"></span>
+</div>
+<span class="text-[13px] leading-[18px] text-gray-700 font-body-sm" id="upload-progress-type"></span>
+</div>
+<div class="w-full bg-[#e0e0e0] h-1 mb-3 rounded-none overflow-hidden">
+<div class="bg-primary-container h-full" id="upload-progress-bar" style="width: 0%"></div>
+</div>
+<div class="flex items-center justify-between text-[13px] leading-[18px]">
+<span class="text-gray-600 font-body-sm" id="upload-progress-status"></span>
+<button class="text-primary-container hover:underline text-[13px] cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary-container bg-transparent p-0 border-0" id="upload-cancel-button" type="button">
+            Cancel
+          </button>
+</div>
+</div>
+<div class="bg-surface-container-lowest border border-[#e0e0e0] p-4 hidden" id="upload-finished-panel">
+<p class="text-body-md font-normal text-gray-900 mb-3" id="upload-finished-text"></p>
+<div class="flex items-center">
+<a class="inline-flex items-center justify-center bg-primary-container hover:bg-[#0353e9] active:bg-[#002d9c] text-white px-4 py-1.5 text-[13px] font-medium rounded-none focus:outline-none focus:ring-2 focus:ring-primary-container focus:ring-offset-2" href="threats.html">
+            View threats
+          </a>
+<a class="inline-flex items-center justify-center bg-surface-container-lowest hover:bg-[#f4f4f4] border border-[#8d8d8d] text-gray-900 px-4 py-1.5 text-[13px] font-medium ml-3 rounded-none focus:outline-none focus:ring-2 focus:ring-primary-container focus:ring-offset-2" href="index.html">
+            View overview
+          </a>
+</div>
+</div>
+</div>
+</main>
+<script src="js/config.js"></script>
+<script src="js/core/dom.js"></script>
+<script src="js/core/format.js"></script>
+<script src="js/services/http-client.js"></script>
+<script src="js/services/mock-data.js"></script>
+<script src="js/services/report-builder.js"></script>
+<script src="js/services/download.js"></script>
+<script src="js/services/mock-api.js"></script>
+<script src="js/services/api.js"></script>
+<script src="js/pages/upload.js"></script>
+</body>
+</html>

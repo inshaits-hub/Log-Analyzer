@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Log Analyzer - Overview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400;1,700&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="js/tailwind-config.js"></script>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-surface-container-low text-on-surface font-body-md text-body-md antialiased min-h-screen flex flex-col m-0 p-0 selection:bg-primary-container selection:text-on-primary" data-page="overview">
+<div id="app-shell"></div>
+<script src="js/ui/layout.js"></script>
+<main class="w-full max-w-[1440px] mx-auto px-6 py-6 flex-1 flex flex-col">
+<section class="bg-surface-container-lowest border-l-[3px] border-l-[#da1e28] border-t border-r border-b border-surface-container-highest p-3.5 mb-6 flex items-center justify-between hidden" id="overview-error-banner" role="alert">
+<div class="flex items-center space-x-3">
+<span class="material-symbols-outlined text-[#da1e28] text-[20px]" data-icon="error" style="font-variation-settings: 'FILL' 1;">error</span>
+<span class="text-body-md font-body-md text-on-surface">Couldn't connect to the server. Check that the backend is running.</span>
+</div>
+<div>
+<button class="text-primary-container font-label-md text-label-md hover:underline focus:outline-none focus:ring-1 focus:ring-primary-container px-1" id="overview-retry-button" type="button">
+          Retry
+        </button>
+</div>
+</section>
+<section class="bg-surface-container-lowest border border-surface-container-highest p-6 mb-6 hidden" id="overview-placeholder-metrics">
+<div class="grid grid-cols-1 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-surface-container-highest">
+<div class="pb-4 md:pb-0 md:pr-6">
+<div class="text-label-sm font-label-sm text-secondary uppercase tracking-wider mb-2">Events parsed</div>
+<div class="text-headline-xl font-headline-xl text-secondary-fixed-dim font-semibold select-none">-</div>
+</div>
+<div class="py-4 md:py-0 md:px-6">
+<div class="text-label-sm font-label-sm text-secondary uppercase tracking-wider mb-2">Threats</div>
+<div class="text-headline-xl font-headline-xl text-secondary-fixed-dim font-semibold select-none">-</div>
+</div>
+<div class="py-4 md:py-0 md:px-6">
+<div class="text-label-sm font-label-sm text-secondary uppercase tracking-wider mb-2">Critical</div>
+<div class="text-headline-xl font-headline-xl text-secondary-fixed-dim font-semibold select-none">-</div>
+</div>
+<div class="pt-4 md:pt-0 md:pl-6">
+<div class="text-label-sm font-label-sm text-secondary uppercase tracking-wider mb-2">Flagged source IPs</div>
+<div class="text-headline-xl font-headline-xl text-secondary-fixed-dim font-semibold select-none">-</div>
+</div>
+</div>
+</section>
+<section class="bg-surface-container-lowest border border-surface-container-highest p-12 text-center flex flex-col items-center justify-center min-h-[360px] hidden" id="overview-empty-state">
+<div class="w-12 h-12 bg-surface-container-low border border-surface-container-highest flex items-center justify-center mb-4 text-secondary">
+<span class="material-symbols-outlined text-[24px]" data-icon="description">description</span>
+</div>
+<h2 class="text-headline-sm font-headline-sm text-on-surface mb-2 font-semibold">
+        No log file analyzed yet
+      </h2>
+<p class="text-body-md font-body-md text-secondary mb-5 max-w-md">
+        Upload an SSH, Nginx or firewall log to see results here.
+      </p>
+<button class="bg-primary-container text-on-primary px-5 py-2 text-body-md font-body-md font-medium rounded-none hover:bg-primary focus:outline-none focus:ring-2 focus:ring-primary-container focus:ring-offset-2 flex items-center space-x-2 transition-colors" id="overview-empty-upload-button" type="button">
+<span class="material-symbols-outlined text-[16px]" data-icon="upload_file">upload_file</span>
+<span>Upload log file</span>
+</button>
+</section>
+<div id="overview-content">
+<div class="flex items-center text-body-sm font-body-sm text-secondary mb-6 hidden" id="overview-last-upload">
+<span>Last upload: <span class="font-code-sm text-code-sm text-on-surface bg-surface-container px-1 py-0.5 border border-surface-container-highest" id="overview-filename"></span>, analyzed <span id="overview-analyzed-at"></span></span>
+<a class="text-primary-container hover:underline ml-2 font-medium" href="upload.html">Change file</a>
+</div>
+<section class="bg-surface-container-lowest border border-surface-container-highest p-6 mb-6">
+<div class="grid grid-cols-4 divide-x divide-surface-container-highest">
+<div class="pr-6">
+<div class="text-secondary font-label-sm text-label-sm uppercase mb-1">Events parsed</div>
+<div class="font-headline-xl text-headline-xl text-on-surface tracking-tight font-semibold" id="overview-metric-events">-</div>
+</div>
+<div class="px-6">
+<div class="text-secondary font-label-sm text-label-sm uppercase mb-1">Threats</div>
+<div class="font-headline-xl text-headline-xl text-on-surface tracking-tight font-semibold" id="overview-metric-threats">-</div>
+</div>
+<div class="px-6">
+<div class="text-secondary font-label-sm text-label-sm uppercase mb-1">Critical</div>
+<div class="font-headline-xl text-headline-xl text-on-error-container tracking-tight font-semibold" id="overview-metric-critical">-</div>
+</div>
+<div class="pl-6">
+<div class="text-secondary font-label-sm text-label-sm uppercase mb-1">Flagged source IPs</div>
+<div class="font-headline-xl text-headline-xl text-on-surface tracking-tight font-semibold" id="overview-metric-ips">-</div>
+</div>
+</div>
+<div class="border-t border-surface-container-highest pt-4 mt-6">
+<div aria-label="Threat severity split" class="w-full flex h-2 bg-surface-container mb-3 overflow-hidden" role="progressbar">
+<div class="bg-[#da1e28] h-full" id="overview-severity-critical" style="width: 0%;"></div>
+<div class="bg-[#ff832b] h-full" id="overview-severity-high" style="width: 0%;"></div>
+<div class="bg-[#f1c21b] h-full" id="overview-severity-medium" style="width: 0%;"></div>
+<div class="bg-[#8d8d8d] h-full" id="overview-severity-low" style="width: 0%;"></div>
+</div>
+<div class="flex items-center space-x-6 font-code-sm text-code-sm text-secondary">
+<div class="flex items-center space-x-1.5">
+<span class="inline-block w-2.5 h-2.5 bg-[#da1e28]"></span>
+<span class="text-on-surface font-medium">Critical</span>
+<span id="overview-legend-critical">-</span>
+</div>
+<div class="flex items-center space-x-1.5">
+<span class="inline-block w-2.5 h-2.5 bg-[#ff832b]"></span>
+<span class="text-on-surface font-medium">High</span>
+<span id="overview-legend-high">-</span>
+</div>
+<div class="flex items-center space-x-1.5">
+<span class="inline-block w-2.5 h-2.5 bg-[#f1c21b]"></span>
+<span class="text-on-surface font-medium">Medium</span>
+<span id="overview-legend-medium">-</span>
+</div>
+<div class="flex items-center space-x-1.5">
+<span class="inline-block w-2.5 h-2.5 bg-[#8d8d8d]"></span>
+<span class="text-on-surface font-medium">Low</span>
+<span id="overview-legend-low">-</span>
+</div>
+</div>
+</div>
+</section>
+<section class="bg-surface-container-lowest border border-surface-container-highest p-6 mb-6">
+<div class="flex items-center justify-between mb-4">
+<h2 class="font-headline-sm text-headline-sm text-on-surface font-semibold">Threats per hour</h2>
+<span class="text-secondary font-code-sm text-code-sm">24-hour distribution (UTC)</span>
+</div>
+<div class="relative w-full h-48 flex flex-col justify-end pt-4 pb-6">
+<div class="absolute inset-0 top-4 bottom-6 flex flex-col justify-between pointer-events-none" id="overview-chart-yaxis"></div>
+<div class="relative z-10 w-full h-full flex items-end justify-between px-2 gap-1.5" id="overview-chart-bars"></div>
+</div>
+<div class="w-full flex justify-between px-2 pt-2 border-t border-surface-container-highest text-[11px] font-code-sm text-secondary select-none">
+<span>00:00</span>
+<span>02:00</span>
+<span>04:00</span>
+<span>06:00</span>
+<span>08:00</span>
+<span>10:00</span>
+<span>12:00</span>
+<span>14:00</span>
+<span>16:00</span>
+<span>18:00</span>
+<span>20:00</span>
+<span>22:00</span>
+</div>
+</section>
+<section class="bg-surface-container-lowest border border-surface-container-highest p-6 mb-8">
+<div class="flex items-center justify-between mb-4">
+<div class="flex items-center space-x-3">
+<h2 class="font-headline-sm text-headline-sm text-on-surface font-semibold">Critical threats</h2>
+<span class="inline-flex items-center h-5 px-1.5 text-label-sm font-label-sm bg-[#fff1f1] text-[#da1e28] border border-[#ffb3b8]" id="overview-critical-badge"></span>
+</div>
+<span class="text-secondary font-code-sm text-code-sm">Severity: Score &gt;= 9.0</span>
+</div>
+<div class="w-full overflow-x-auto">
+<table class="w-full border-collapse text-left">
+<thead>
+<tr class="bg-surface-container-low border-b border-[#8d8d8d] h-8 text-[11px] font-label-sm tracking-wider uppercase text-on-surface">
+<th class="py-1.5 px-3 font-semibold text-left" scope="col">Type</th>
+<th class="py-1.5 px-3 font-semibold text-left" scope="col">Source IP</th>
+<th class="py-1.5 px-3 font-semibold text-left" scope="col">Details</th>
+<th class="py-1.5 px-3 font-semibold text-right" scope="col">Risk score</th>
+<th class="py-1.5 px-3 font-semibold text-right" scope="col">Timestamp</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container-highest font-body-sm text-body-sm" id="overview-critical-tbody"></tbody>
+</table>
+</div>
+<div class="mt-4 pt-3 border-t border-surface-container-highest flex justify-end">
+<a class="text-primary-container hover:underline font-medium text-body-md inline-flex items-center" href="threats.html" id="overview-view-all-link"></a>
+</div>
+</section>
+</div>
+</main>
+<script src="js/config.js"></script>
+<script src="js/core/dom.js"></script>
+<script src="js/core/format.js"></script>
+<script src="js/services/http-client.js"></script>
+<script src="js/services/mock-data.js"></script>
+<script src="js/services/report-builder.js"></script>
+<script src="js/services/download.js"></script>
+<script src="js/services/mock-api.js"></script>
+<script src="js/services/api.js"></script>
+<script src="js/pages/overview.js"></script>
+</body>
+</html>
