@@ -1,145 +1,186 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Log Analyzer - Threat Detail</title>
-<script src="js/head.js"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Threat detail - Log Analyzer</title>
+  <script src="js/head.js"></script>
 </head>
-<body class="bg-surface-container-low text-on-surface font-body-md text-body-md antialiased min-h-screen flex flex-col m-0 p-0 selection:bg-primary-container selection:text-on-primary" data-page="threat-detail">
-<div id="app-shell"></div>
-<script src="js/ui/layout.js"></script>
-<div class="flex-1 flex overflow-hidden w-full max-w-[1440px] mx-auto bg-surface-container-low">
-<main class="flex-1 flex flex-col min-w-0 border-r border-surface-container-highest bg-surface-container-low overflow-y-auto">
-<div class="bg-surface-container-lowest border-b border-surface-container-highest p-3 flex items-center justify-between gap-3 shrink-0">
-<div class="flex items-center gap-2 flex-1">
-<div class="relative w-64">
-<span class="absolute inset-y-0 left-2 flex items-center pointer-events-none text-secondary">
-<span class="material-symbols-outlined" data-icon="search">search</span>
-</span>
-<input class="w-full h-8 pl-8 pr-2 bg-surface-container-lowest border border-outline-variant font-body-sm text-body-sm text-on-surface focus:outline-none focus:border-primary-container" id="detail-search" placeholder="Filter threats (e.g. IP, Rule)..." type="text"/>
-</div>
-<div class="flex items-center border border-outline-variant bg-surface-container-lowest h-8 px-2">
-<span class="text-secondary font-label-sm text-label-sm mr-2">Severity:</span>
-<select class="bg-transparent border-0 font-body-sm text-body-sm p-0 pr-4 text-on-surface focus:ring-0 cursor-pointer" id="detail-filter-severity">
-<option value="">All Severities</option>
-<option value="CRITICAL">Critical</option>
-<option value="HIGH">High</option>
-<option value="MEDIUM">Medium</option>
-<option value="LOW">Low</option>
-</select>
-</div>
-<div class="flex items-center border border-outline-variant bg-surface-container-lowest h-8 px-2">
-<span class="text-secondary font-label-sm text-label-sm mr-2">Target Host:</span>
-<select class="bg-transparent border-0 font-body-sm text-body-sm p-0 pr-4 text-on-surface focus:ring-0 cursor-pointer" id="detail-filter-host">
-<option>All hosts</option>
-</select>
-</div>
-</div>
-<div class="flex items-center text-secondary font-code-sm text-code-sm">
-<span id="detail-count-text">-</span>
-</div>
-</div>
-<div class="flex-1 overflow-x-auto">
-<table class="w-full text-left border-collapse">
-<thead>
-<tr class="bg-surface-container-low border-b border-outline-variant h-8 text-secondary font-label-sm text-label-sm uppercase tracking-wider">
-<th class="px-3 py-1 font-semibold w-10 text-center"></th>
-<th class="px-3 py-1 font-semibold">Threat Name</th>
-<th class="px-3 py-1 font-semibold">Source IP</th>
-<th class="px-3 py-1 font-semibold">Severity</th>
-<th class="px-3 py-1 font-semibold text-right">Risk score</th>
-<th class="px-3 py-1 font-semibold">Timestamp</th>
-<th class="px-3 py-1 font-semibold">Action</th>
-</tr>
-</thead>
-<tbody class="divide-y divide-surface-container-highest font-body-sm text-body-sm" id="detail-tbody"></tbody>
-</table>
-</div>
-<div class="p-2 border-t border-surface-container-highest bg-surface-container-lowest flex items-center justify-between text-secondary font-code-sm text-code-sm">
-<span id="detail-status-left">-</span>
-<span id="detail-status-right">-</span>
-</div>
-</main>
-<aside class="w-[440px] shrink-0 bg-surface-container-lowest border-l border-surface-container-highest flex flex-col justify-between overflow-y-auto">
-<div>
-<div class="p-4 text-secondary font-body-sm text-body-sm hidden" id="detail-empty">Select a threat to see its details.</div>
-<div class="p-4 border-b border-surface-container-highest flex items-center justify-between" id="detail-header">
-<div class="flex items-center space-x-2">
-<span aria-hidden="true" class="inline-block w-2 h-2 bg-[#da1e28]" id="detail-severity-dot"></span>
-<span class="font-label-sm text-label-sm text-[#da1e28] font-semibold uppercase tracking-wider" id="detail-severity-label"></span>
-<span class="text-surface-container-highest">|</span>
-<h2 class="font-headline-sm text-headline-sm font-semibold text-on-surface" id="detail-title"></h2>
-</div>
-<button aria-label="Close panel" class="text-secondary hover:text-on-surface font-headline-sm text-headline-sm leading-none focus:outline-none" id="detail-close-button" title="Close Panel" type="button">
-            ×
+
+<body class="bg-surface text-on-surface font-body-md text-body-md antialiased m-0 p-0"
+  data-page="threat-detail">
+  <div id="app-shell"></div>
+  <script src="js/ui/layout.js"></script>
+  <main class="app-content">
+    <div class="page-head">
+      <div class="min-w-0">
+        <h1 class="page-title">Threat detail</h1>
+        <p class="page-sub">Select a finding to inspect its evidence and source events.</p>
+      </div>
+      <a class="btn btn-secondary" href="threats.html">
+        <span class="material-symbols-outlined" data-icon="arrow_back">arrow_back</span>
+        <span>All threats</span>
+      </a>
+    </div>
+
+    <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_400px] gap-4 items-start">
+
+      <section class="card overflow-hidden min-w-0">
+        <div class="card-body !py-3 border-b border-surface-container">
+          <div class="flex flex-wrap items-end gap-3">
+            <div class="field flex-1 min-w-[200px]">
+              <label class="field-label" for="detail-search">Filter</label>
+              <div class="search-field">
+                <span class="material-symbols-outlined" data-icon="search">search</span>
+                <input class="input !h-[32px] !text-[12.5px]" id="detail-search" placeholder="IP, rule or title"
+                  type="text" autocomplete="off" />
+              </div>
+            </div>
+            <div class="field w-full sm:w-auto sm:min-w-[160px]">
+              <label class="field-label" for="detail-filter-severity">Severity</label>
+              <select class="select !h-[32px] !text-[12.5px]" id="detail-filter-severity">
+                <option value="">All severities</option>
+                <option value="CRITICAL">Critical</option>
+                <option value="HIGH">High</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="LOW">Low</option>
+              </select>
+            </div>
+            <div class="ml-auto pb-1 text-[12.5px] text-secondary mono" id="detail-count-text">-</div>
+          </div>
+        </div>
+
+        <div class="table-wrap custom-scroll">
+          <table class="dtable min-w-[720px]">
+            <thead>
+              <tr>
+                <th scope="col" class="w-8"></th>
+                <th scope="col">Threat</th>
+                <th scope="col" class="w-[140px]">Source IP</th>
+                <th scope="col" class="w-[124px]">Severity</th>
+                <th scope="col" class="num w-[92px]">Risk</th>
+                <th scope="col" class="w-[136px]">Detected</th>
+              </tr>
+            </thead>
+            <tbody id="detail-tbody"></tbody>
+          </table>
+        </div>
+
+        <footer
+          class="px-5 py-3 border-t border-surface-container flex flex-wrap items-center justify-between gap-2 text-[12.5px] text-secondary mono">
+          <span id="detail-status-left">-</span>
+          <span id="detail-status-right">-</span>
+        </footer>
+      </section>
+
+      <aside class="card overflow-hidden xl:sticky xl:top-[72px] min-w-0">
+        <div class="empty !py-10" id="detail-empty">
+          <div class="empty-icon">
+            <span class="material-symbols-outlined" data-icon="touch_app">touch_app</span>
+          </div>
+          <div class="empty-title">Nothing selected</div>
+          <p class="empty-text">Pick a row on the left to see its risk breakdown and matching log lines.</p>
+        </div>
+
+        <div class="card-head hidden" id="detail-header">
+          <div class="flex items-center gap-2.5 min-w-0">
+            <span class="sev-dot" aria-hidden="true" id="detail-severity-dot"></span>
+            <span class="text-[11px] font-semibold uppercase tracking-[0.04em]" id="detail-severity-label"></span>
+          </div>
+          <button class="btn btn-icon" aria-label="Close panel" id="detail-close-button" title="Close panel"
+            type="button">
+            <span class="material-symbols-outlined" data-icon="close">close</span>
           </button>
-</div>
-<div class="p-4 border-b border-surface-container-highest space-y-3 font-body-sm text-body-sm" id="detail-fields">
-<div class="flex">
-<span class="w-36 text-secondary font-normal shrink-0">Source IP</span>
-<span class="font-code-md text-code-md text-on-surface font-medium flex items-center gap-1.5">
-<span id="detail-ip"></span>
-<button class="text-secondary hover:text-primary-container" id="detail-copy-icon-button" title="Copy IP" type="button">
-<span class="material-symbols-outlined text-sm" data-icon="content_copy">content_copy</span>
-</button>
-</span>
-</div>
-<div class="flex">
-<span class="w-36 text-secondary font-normal shrink-0">Target accounts</span>
-<span class="font-code-md text-code-md text-on-surface" id="detail-target-accounts">-</span>
-</div>
-<div class="flex">
-<span class="w-36 text-secondary font-normal shrink-0">Detected at</span>
-<span class="font-code-sm text-code-sm text-on-surface" id="detail-detected-at"></span>
-</div>
-<div class="flex">
-<span class="w-36 text-secondary font-normal shrink-0">Rule</span>
-<span class="text-on-surface" id="detail-rule"></span>
-</div>
-<div class="flex">
-<span class="w-36 text-secondary font-normal shrink-0">Details</span>
-<span class="text-on-surface break-words" id="detail-details"></span>
-</div>
-<div class="flex items-center">
-<span class="w-36 text-secondary font-normal shrink-0">Reputation score</span>
-<div class="flex items-center gap-2">
-<span class="text-on-surface font-semibold font-code-md text-code-md" id="detail-risk-score"></span>
-<span class="text-label-sm font-label-sm text-[#da1e28] bg-[#fff1f1] px-1 border border-[#ffb3b8] hidden" id="detail-malicious-tag">Malicious Host</span>
-</div>
-</div>
-</div>
-<div class="p-4 hidden" id="detail-log-lines-section">
-<div class="flex items-center justify-between mb-2">
-<h3 class="font-label-md text-label-md font-semibold text-on-surface" id="detail-log-lines-title">Matching log lines</h3>
-<span class="text-secondary font-code-sm text-code-sm" id="detail-log-lines-showing"></span>
-</div>
-<div class="bg-surface-container-low border border-surface-container-highest p-3 font-code-sm text-code-sm text-on-surface space-y-1.5 leading-relaxed overflow-x-auto whitespace-pre" id="detail-log-lines-box"></div>
-<a class="text-primary-container hover:underline font-label-md text-label-md mt-2 inline-block" href="#" id="detail-log-lines-show-all">
-            Show all →
+        </div>
+
+        <div class="px-5 pb-5 pt-4 hidden" id="detail-fields">
+          <h2 class="text-[15px] font-semibold text-on-surface leading-snug mb-4" id="detail-title"></h2>
+
+          <div class="rounded-lg border border-outline-variant overflow-hidden">
+            <div class="grid grid-cols-[128px_1fr] text-[12.5px] border-b border-surface-container">
+              <div class="bg-surface-container-low px-3 py-2 text-secondary">Source IP</div>
+              <div class="px-3 py-2 flex items-center gap-1.5 min-w-0">
+                <span class="mono font-medium truncate" id="detail-ip"></span>
+                <button class="btn btn-icon !w-6 !h-6 shrink-0" id="detail-copy-icon-button" title="Copy IP"
+                  aria-label="Copy source IP" type="button">
+                  <span class="material-symbols-outlined" data-icon="content_copy">content_copy</span>
+                </button>
+              </div>
+            </div>
+            <div class="grid grid-cols-[128px_1fr] text-[12.5px] border-b border-surface-container">
+              <div class="bg-surface-container-low px-3 py-2 text-secondary">Target accounts</div>
+              <div class="px-3 py-2 mono truncate" id="detail-target-accounts">-</div>
+            </div>
+            <div class="grid grid-cols-[128px_1fr] text-[12.5px] border-b border-surface-container">
+              <div class="bg-surface-container-low px-3 py-2 text-secondary">Detected at</div>
+              <div class="px-3 py-2 mono" id="detail-detected-at"></div>
+            </div>
+            <div class="grid grid-cols-[128px_1fr] text-[12.5px] border-b border-surface-container">
+              <div class="bg-surface-container-low px-3 py-2 text-secondary">Rule</div>
+              <div class="px-3 py-2 mono truncate" id="detail-rule"></div>
+            </div>
+            <div class="grid grid-cols-[128px_1fr] text-[12.5px]">
+              <div class="bg-surface-container-low px-3 py-2 text-secondary">Details</div>
+              <div class="px-3 py-2 break-words" id="detail-details"></div>
+            </div>
+          </div>
+
+          <div class="mt-4 rounded-lg border border-outline-variant bg-surface-container-low/60 px-3.5 py-3">
+            <div class="flex items-center justify-between mb-2">
+              <span class="field-label">Reputation score</span>
+              <span class="badge sev-critical hidden" id="detail-malicious-tag">Malicious host</span>
+            </div>
+            <div class="flex items-baseline gap-2">
+              <span class="text-[28px] font-bold leading-none tracking-tight tnum" id="detail-risk-score"></span>
+              <span class="text-[12px] text-secondary">/ <span class="tnum" id="detail-risk-max">100</span></span>
+            </div>
+            <div class="mt-2.5 h-1.5 rounded-full bg-surface-container-highest overflow-hidden">
+              <div class="h-full rounded-full bg-primary transition-[width] duration-300" id="detail-risk-bar"
+                style="width: 0%"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="px-5 pb-5 hidden" id="detail-log-lines-section">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="text-[12.5px] font-semibold text-on-surface" id="detail-log-lines-title">Matching log lines</h3>
+            <span class="text-[11.5px] text-secondary mono" id="detail-log-lines-showing"></span>
+          </div>
+          <div
+            class="bg-surface-container rounded-lg border border-outline-variant p-3 mono text-on-surface space-y-1.5 leading-relaxed overflow-x-auto custom-scroll whitespace-pre"
+            id="detail-log-lines-box"></div>
+          <a class="btn btn-sm btn-ghost mt-1 !px-1" href="#" id="detail-log-lines-show-all">
+            <span>Show all</span>
+            <span class="material-symbols-outlined" data-icon="arrow_forward">arrow_forward</span>
           </a>
-</div>
-</div>
-<div class="p-4 border-t border-surface-container-highest flex items-center gap-3 bg-surface-container-lowest shrink-0" id="detail-footer">
-<button class="bg-surface-container-lowest border border-outline text-on-surface hover:bg-surface-container-low hover:border-on-surface px-4 py-1.5 font-label-md text-label-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary-container" id="detail-copy-button" type="button">
-          Copy IP
-        </button>
-<button class="bg-surface-container-lowest border border-outline text-on-surface hover:bg-surface-container-low hover:border-on-surface px-4 py-1.5 font-label-md text-label-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary-container" id="detail-export-button" type="button">
-          Export JSON
-        </button>
-</div>
-</aside>
-</div>
-<script src="js/config.js"></script>
-<script src="js/core/dom.js"></script>
-<script src="js/core/format.js"></script>
-<script src="js/ui/severity.js"></script>
-<script src="js/services/http-client.js"></script>
-<script src="js/services/mock-data.js"></script>
-<script src="js/services/report-builder.js"></script>
-<script src="js/services/download.js"></script>
-<script src="js/services/mock-api.js"></script>
-<script src="js/services/api.js"></script>
-<script src="js/pages/threat-detail.js"></script>
+        </div>
+
+        <div class="card-foot hidden" id="detail-footer">
+          <button class="btn btn-secondary flex-1" id="detail-copy-button" type="button">
+            <span class="material-symbols-outlined" data-icon="content_copy">content_copy</span>
+            <span>Copy IP</span>
+          </button>
+          <button class="btn btn-primary flex-1" id="detail-export-button" type="button">
+            <span class="material-symbols-outlined" data-icon="download">download</span>
+            <span>Export JSON</span>
+          </button>
+        </div>
+      </aside>
+
+    </div>
+  </main>
+  <script src="js/config.js"></script>
+  <script src="js/core/dom.js"></script>
+  <script src="js/core/format.js"></script>
+  <script src="js/ui/severity.js"></script>
+  <script src="js/services/http-client.js"></script>
+  <script src="js/services/mock-data.js"></script>
+  <script src="js/services/report-builder.js"></script>
+  <script src="js/services/download.js"></script>
+  <script src="js/services/mock-api.js"></script>
+  <script src="js/services/api.js"></script>
+  <script src="js/pages/threat-detail.js"></script>
 </body>
+
 </html>

@@ -1,177 +1,244 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Log Analyzer - Overview</title>
-<script src="js/head.js"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Overview - Log Analyzer</title>
+  <script src="js/head.js"></script>
 </head>
-<body class="bg-surface-container-low text-on-surface font-body-md text-body-md antialiased min-h-screen flex flex-col m-0 p-0 selection:bg-primary-container selection:text-on-primary" data-page="overview">
-<div id="app-shell"></div>
-<script src="js/ui/layout.js"></script>
-<main class="w-full max-w-[1440px] mx-auto px-6 py-6 flex-1 flex flex-col">
-<section class="bg-surface-container-lowest border-l-[3px] border-l-[#da1e28] border-t border-r border-b border-surface-container-highest p-3.5 mb-6 flex items-center justify-between hidden" id="overview-error-banner" role="alert">
-<div class="flex items-center space-x-3">
-<span class="material-symbols-outlined text-[#da1e28] text-[20px]" data-icon="error" style="font-variation-settings: 'FILL' 1;">error</span>
-<span class="text-body-md font-body-md text-on-surface">Couldn't connect to the server. Check that the backend is running.</span>
-</div>
-<div>
-<button class="text-primary-container font-label-md text-label-md hover:underline focus:outline-none focus:ring-1 focus:ring-primary-container px-1" id="overview-retry-button" type="button">
-          Retry
+
+<body class="bg-surface text-on-surface font-body-md text-body-md antialiased m-0 p-0" data-page="overview">
+  <div id="app-shell"></div>
+  <script src="js/ui/layout.js"></script>
+  <main class="app-content">
+
+    <div class="page-head">
+      <div class="min-w-0">
+        <h1 class="page-title">Security overview</h1>
+        <p class="page-sub">Detected threats and risk across every ingested log file.</p>
+      </div>
+    </div>
+
+    <section class="alert alert-error mb-5 hidden" id="overview-error-banner" role="alert">
+      <span class="material-symbols-outlined fill" data-icon="error"
+        style="font-variation-settings: 'FILL' 1; font-size: 19px;">error</span>
+      <div class="flex-1 min-w-0">
+        <div class="font-semibold">Couldn't reach the analysis API</div>
+        <div class="text-[12.5px] opacity-90 mt-0.5">Check that the Flask backend is running, then retry.</div>
+      </div>
+      <button class="btn btn-sm btn-secondary shrink-0" id="overview-retry-button" type="button">
+        <span class="material-symbols-outlined" data-icon="refresh">refresh</span>
+        <span>Retry</span>
+      </button>
+    </section>
+
+    <section class="card mb-5 hidden" id="overview-placeholder-metrics">
+      <div class="card-body">
+        <div class="stat-grid">
+          <div class="stat" style="--stat-accent: #94a3b8;">
+            <div class="stat-top">
+              <span class="material-symbols-outlined animate-pulse-soft" data-icon="database">database</span>
+              <span class="stat-label">Events parsed</span>
+            </div>
+            <div class="stat-value text-surface-container-highest">-</div>
+          </div>
+          <div class="stat" style="--stat-accent: #94a3b8;">
+            <div class="stat-top">
+              <span class="material-symbols-outlined animate-pulse-soft" data-icon="gpp_maybe">gpp_maybe</span>
+              <span class="stat-label">Threats</span>
+            </div>
+            <div class="stat-value text-surface-container-highest">-</div>
+          </div>
+          <div class="stat" style="--stat-accent: #94a3b8;">
+            <div class="stat-top">
+              <span class="material-symbols-outlined animate-pulse-soft" data-icon="warning">warning</span>
+              <span class="stat-label">Critical</span>
+            </div>
+            <div class="stat-value text-surface-container-highest">-</div>
+          </div>
+          <div class="stat" style="--stat-accent: #94a3b8;">
+            <div class="stat-top">
+              <span class="material-symbols-outlined animate-pulse-soft" data-icon="lan">lan</span>
+              <span class="stat-label">Flagged source IPs</span>
+            </div>
+            <div class="stat-value text-surface-container-highest">-</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card mb-5 hidden" id="overview-empty-state">
+      <div class="empty">
+        <div class="empty-icon">
+          <span class="material-symbols-outlined" data-icon="description">description</span>
+        </div>
+        <h2 class="empty-title">No log file analyzed yet</h2>
+        <p class="empty-text">Upload an SSH, Nginx or firewall log and the threat breakdown, severity mix and
+          hourly activity will appear here.</p>
+        <button class="btn btn-primary mt-2" id="overview-empty-upload-button" type="button">
+          <span class="material-symbols-outlined" data-icon="upload_file">upload_file</span>
+          <span>Upload log file</span>
         </button>
-</div>
-</section>
-<section class="bg-surface-container-lowest border border-surface-container-highest p-6 mb-6 hidden" id="overview-placeholder-metrics">
-<div class="grid grid-cols-1 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-surface-container-highest">
-<div class="pb-4 md:pb-0 md:pr-6">
-<div class="text-label-sm font-label-sm text-secondary uppercase tracking-wider mb-2">Events parsed</div>
-<div class="text-headline-xl font-headline-xl text-secondary-fixed-dim font-semibold select-none">-</div>
-</div>
-<div class="py-4 md:py-0 md:px-6">
-<div class="text-label-sm font-label-sm text-secondary uppercase tracking-wider mb-2">Threats</div>
-<div class="text-headline-xl font-headline-xl text-secondary-fixed-dim font-semibold select-none">-</div>
-</div>
-<div class="py-4 md:py-0 md:px-6">
-<div class="text-label-sm font-label-sm text-secondary uppercase tracking-wider mb-2">Critical</div>
-<div class="text-headline-xl font-headline-xl text-secondary-fixed-dim font-semibold select-none">-</div>
-</div>
-<div class="pt-4 md:pt-0 md:pl-6">
-<div class="text-label-sm font-label-sm text-secondary uppercase tracking-wider mb-2">Flagged source IPs</div>
-<div class="text-headline-xl font-headline-xl text-secondary-fixed-dim font-semibold select-none">-</div>
-</div>
-</div>
-</section>
-<section class="bg-surface-container-lowest border border-surface-container-highest p-12 text-center flex flex-col items-center justify-center min-h-[360px] hidden" id="overview-empty-state">
-<div class="w-12 h-12 bg-surface-container-low border border-surface-container-highest flex items-center justify-center mb-4 text-secondary">
-<span class="material-symbols-outlined text-[24px]" data-icon="description">description</span>
-</div>
-<h2 class="text-headline-sm font-headline-sm text-on-surface mb-2 font-semibold">
-        No log file analyzed yet
-      </h2>
-<p class="text-body-md font-body-md text-secondary mb-5 max-w-md">
-        Upload an SSH, Nginx or firewall log to see results here.
-      </p>
-<button class="bg-primary-container text-on-primary px-5 py-2 text-body-md font-body-md font-medium rounded-none hover:bg-primary focus:outline-none focus:ring-2 focus:ring-primary-container focus:ring-offset-2 flex items-center space-x-2 transition-colors" id="overview-empty-upload-button" type="button">
-<span class="material-symbols-outlined text-[16px]" data-icon="upload_file">upload_file</span>
-<span>Upload log file</span>
-</button>
-</section>
-<div id="overview-content">
-<div class="flex items-center text-body-sm font-body-sm text-secondary mb-6 hidden" id="overview-last-upload">
-<span>Last upload: <span class="font-code-sm text-code-sm text-on-surface bg-surface-container px-1 py-0.5 border border-surface-container-highest" id="overview-filename"></span>, analyzed <span id="overview-analyzed-at"></span></span>
-<a class="text-primary-container hover:underline ml-2 font-medium" href="upload.html">Change file</a>
-</div>
-<section class="bg-surface-container-lowest border border-surface-container-highest p-6 mb-6">
-<div class="grid grid-cols-4 divide-x divide-surface-container-highest">
-<div class="pr-6">
-<div class="text-secondary font-label-sm text-label-sm uppercase mb-1">Events parsed</div>
-<div class="font-headline-xl text-headline-xl text-on-surface tracking-tight font-semibold" id="overview-metric-events">-</div>
-</div>
-<div class="px-6">
-<div class="text-secondary font-label-sm text-label-sm uppercase mb-1">Threats</div>
-<div class="font-headline-xl text-headline-xl text-on-surface tracking-tight font-semibold" id="overview-metric-threats">-</div>
-</div>
-<div class="px-6">
-<div class="text-secondary font-label-sm text-label-sm uppercase mb-1">Critical</div>
-<div class="font-headline-xl text-headline-xl text-on-error-container tracking-tight font-semibold" id="overview-metric-critical">-</div>
-</div>
-<div class="pl-6">
-<div class="text-secondary font-label-sm text-label-sm uppercase mb-1">Flagged source IPs</div>
-<div class="font-headline-xl text-headline-xl text-on-surface tracking-tight font-semibold" id="overview-metric-ips">-</div>
-</div>
-</div>
-<div class="border-t border-surface-container-highest pt-4 mt-6">
-<div aria-label="Threat severity split" class="w-full flex h-2 bg-surface-container mb-3 overflow-hidden" role="progressbar">
-<div class="bg-[#da1e28] h-full" id="overview-severity-critical" style="width: 0%;"></div>
-<div class="bg-[#ff832b] h-full" id="overview-severity-high" style="width: 0%;"></div>
-<div class="bg-[#f1c21b] h-full" id="overview-severity-medium" style="width: 0%;"></div>
-<div class="bg-[#8d8d8d] h-full" id="overview-severity-low" style="width: 0%;"></div>
-</div>
-<div class="flex items-center space-x-6 font-code-sm text-code-sm text-secondary">
-<div class="flex items-center space-x-1.5">
-<span class="inline-block w-2.5 h-2.5 bg-[#da1e28]"></span>
-<span class="text-on-surface font-medium">Critical</span>
-<span id="overview-legend-critical">-</span>
-</div>
-<div class="flex items-center space-x-1.5">
-<span class="inline-block w-2.5 h-2.5 bg-[#ff832b]"></span>
-<span class="text-on-surface font-medium">High</span>
-<span id="overview-legend-high">-</span>
-</div>
-<div class="flex items-center space-x-1.5">
-<span class="inline-block w-2.5 h-2.5 bg-[#f1c21b]"></span>
-<span class="text-on-surface font-medium">Medium</span>
-<span id="overview-legend-medium">-</span>
-</div>
-<div class="flex items-center space-x-1.5">
-<span class="inline-block w-2.5 h-2.5 bg-[#8d8d8d]"></span>
-<span class="text-on-surface font-medium">Low</span>
-<span id="overview-legend-low">-</span>
-</div>
-</div>
-</div>
-</section>
-<section class="bg-surface-container-lowest border border-surface-container-highest p-6 mb-6">
-<div class="flex items-center justify-between mb-4">
-<h2 class="font-headline-sm text-headline-sm text-on-surface font-semibold">Threats per hour</h2>
-<span class="text-secondary font-code-sm text-code-sm">24-hour distribution (UTC)</span>
-</div>
-<div class="relative w-full h-48 flex flex-col justify-end pt-4 pb-6">
-<div class="absolute inset-0 top-4 bottom-6 flex flex-col justify-between pointer-events-none" id="overview-chart-yaxis"></div>
-<div class="relative z-10 w-full h-full flex items-end justify-between px-2 gap-1.5" id="overview-chart-bars"></div>
-</div>
-<div class="w-full flex justify-between px-2 pt-2 border-t border-surface-container-highest text-[11px] font-code-sm text-secondary select-none">
-<span>00:00</span>
-<span>02:00</span>
-<span>04:00</span>
-<span>06:00</span>
-<span>08:00</span>
-<span>10:00</span>
-<span>12:00</span>
-<span>14:00</span>
-<span>16:00</span>
-<span>18:00</span>
-<span>20:00</span>
-<span>22:00</span>
-</div>
-</section>
-<section class="bg-surface-container-lowest border border-surface-container-highest p-6 mb-8">
-<div class="flex items-center justify-between mb-4">
-<div class="flex items-center space-x-3">
-<h2 class="font-headline-sm text-headline-sm text-on-surface font-semibold">Critical threats</h2>
-<span class="inline-flex items-center h-5 px-1.5 text-label-sm font-label-sm bg-[#fff1f1] text-[#da1e28] border border-[#ffb3b8]" id="overview-critical-badge"></span>
-</div>
-<span class="text-secondary font-code-sm text-code-sm">Severity: Score &gt;= 9.0</span>
-</div>
-<div class="w-full overflow-x-auto">
-<table class="w-full border-collapse text-left">
-<thead>
-<tr class="bg-surface-container-low border-b border-[#8d8d8d] h-8 text-[11px] font-label-sm tracking-wider uppercase text-on-surface">
-<th class="py-1.5 px-3 font-semibold text-left" scope="col">Type</th>
-<th class="py-1.5 px-3 font-semibold text-left" scope="col">Source IP</th>
-<th class="py-1.5 px-3 font-semibold text-left" scope="col">Details</th>
-<th class="py-1.5 px-3 font-semibold text-right" scope="col">Risk score</th>
-<th class="py-1.5 px-3 font-semibold text-right" scope="col">Timestamp</th>
-</tr>
-</thead>
-<tbody class="divide-y divide-surface-container-highest font-body-sm text-body-sm" id="overview-critical-tbody"></tbody>
-</table>
-</div>
-<div class="mt-4 pt-3 border-t border-surface-container-highest flex justify-end">
-<a class="text-primary-container hover:underline font-medium text-body-md inline-flex items-center" href="threats.html" id="overview-view-all-link"></a>
-</div>
-</section>
-</div>
-</main>
-<script src="js/config.js"></script>
-<script src="js/core/dom.js"></script>
-<script src="js/core/format.js"></script>
-<script src="js/services/http-client.js"></script>
-<script src="js/services/mock-data.js"></script>
-<script src="js/services/report-builder.js"></script>
-<script src="js/services/download.js"></script>
-<script src="js/services/mock-api.js"></script>
-<script src="js/services/api.js"></script>
-<script src="js/pages/overview.js"></script>
+      </div>
+    </section>
+
+    <div id="overview-content">
+
+      <div class="flex flex-wrap items-center gap-2 mb-4 hidden" id="overview-last-upload">
+        <span class="text-[12.5px] text-secondary">Last upload</span>
+        <span class="chip" id="overview-filename"></span>
+        <span class="text-[12.5px] text-secondary" id="overview-analyzed-at"></span>
+        <a class="btn btn-sm btn-ghost ml-auto" href="upload.html">
+          <span class="material-symbols-outlined" data-icon="swap_horiz">swap_horiz</span>
+          <span>Change file</span>
+        </a>
+      </div>
+
+      <section class="stat-grid mb-5">
+        <div class="stat" style="--stat-accent: #2563eb;">
+          <div class="stat-top">
+            <span class="material-symbols-outlined" data-icon="database">database</span>
+            <span class="stat-label">Events parsed</span>
+          </div>
+          <div class="stat-value" id="overview-metric-events">-</div>
+          <div class="stat-sub">All records ingested</div>
+        </div>
+        <div class="stat" style="--stat-accent: #ea580c;">
+          <div class="stat-top">
+            <span class="material-symbols-outlined" data-icon="gpp_maybe">gpp_maybe</span>
+            <span class="stat-label">Threats</span>
+          </div>
+          <div class="stat-value" id="overview-metric-threats">-</div>
+          <div class="stat-sub">Heuristic detections</div>
+        </div>
+        <div class="stat" style="--stat-accent: #dc2626;">
+          <div class="stat-top">
+            <span class="material-symbols-outlined fill" data-icon="warning"
+              style="font-variation-settings: 'FILL' 1;">warning</span>
+            <span class="stat-label">Critical</span>
+          </div>
+          <div class="stat-value" id="overview-metric-critical">-</div>
+          <div class="stat-sub">Needs immediate review</div>
+        </div>
+        <div class="stat" style="--stat-accent: #64748b;">
+          <div class="stat-top">
+            <span class="material-symbols-outlined" data-icon="lan">lan</span>
+            <span class="stat-label">Flagged source IPs</span>
+          </div>
+          <div class="stat-value" id="overview-metric-ips">-</div>
+          <div class="stat-sub">Unique attackers</div>
+        </div>
+      </section>
+
+      <section class="card mb-5">
+        <div class="card-head">
+          <h2 class="card-title">
+            <span class="material-symbols-outlined text-on-surface-variant" data-icon="donut_small">donut_small</span>
+            <span>Severity distribution</span>
+          </h2>
+        </div>
+        <div class="card-body">
+          <div class="meter" role="img" aria-label="Threat severity split">
+            <span class="bg-sev-critical" id="overview-severity-critical" style="width: 0%;"></span>
+            <span class="bg-sev-high" id="overview-severity-high" style="width: 0%;"></span>
+            <span class="bg-sev-medium" id="overview-severity-medium" style="width: 0%;"></span>
+            <span class="bg-sev-low" id="overview-severity-low" style="width: 0%;"></span>
+          </div>
+          <div class="meter-key mt-3">
+            <span class="meter-key-item">
+              <span class="sev-dot bg-sev-critical"></span>Critical
+              <b id="overview-legend-critical">-</b>
+            </span>
+            <span class="meter-key-item">
+              <span class="sev-dot bg-sev-high"></span>High
+              <b id="overview-legend-high">-</b>
+            </span>
+            <span class="meter-key-item">
+              <span class="sev-dot bg-sev-medium"></span>Medium
+              <b id="overview-legend-medium">-</b>
+            </span>
+            <span class="meter-key-item">
+              <span class="sev-dot bg-sev-low"></span>Low
+              <b id="overview-legend-low">-</b>
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <section class="card mb-5">
+        <div class="card-head">
+          <h2 class="card-title">
+            <span class="material-symbols-outlined text-on-surface-variant" data-icon="bar_chart">bar_chart</span>
+            <span>Threats per hour</span>
+          </h2>
+          <span class="text-[11.5px] text-secondary mono">24-hour distribution (UTC)</span>
+        </div>
+        <div class="card-body pt-4">
+          <div class="relative w-full h-52 flex flex-col justify-end pb-6">
+            <div class="absolute inset-0 top-0 bottom-6 flex flex-col justify-between pointer-events-none"
+              id="overview-chart-yaxis"></div>
+            <div class="relative z-10 w-full h-full flex items-end gap-1.5 sm:gap-2 px-1"
+              id="overview-chart-bars"></div>
+          </div>
+          <div
+            class="w-full flex justify-between px-1 pt-2.5 mt-1 border-t border-surface-container text-[10.5px] mono text-secondary select-none">
+            <span>00:00</span>
+            <span class="hidden sm:inline">02:00</span>
+            <span>04:00</span>
+            <span class="hidden sm:inline">06:00</span>
+            <span>08:00</span>
+            <span class="hidden sm:inline">10:00</span>
+            <span>12:00</span>
+            <span class="hidden sm:inline">14:00</span>
+            <span>16:00</span>
+            <span class="hidden sm:inline">18:00</span>
+            <span>20:00</span>
+            <span class="hidden sm:inline">22:00</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <h2 class="card-title">
+            <span class="material-symbols-outlined text-sev-critical" data-icon="crisis_alert">crisis_alert</span>
+            <span>Critical threats</span>
+            <span class="badge sev-critical" id="overview-critical-badge"></span>
+          </h2>
+          <span class="text-[11.5px] text-secondary mono" id="overview-critical-threshold">Severity</span>
+        </div>
+        <div class="table-wrap custom-scroll">
+          <table class="dtable">
+            <thead>
+              <tr>
+                <th scope="col">Type</th>
+                <th scope="col">Source IP</th>
+                <th scope="col">Details</th>
+                <th scope="col" class="num">Risk</th>
+                <th scope="col" class="num">Timestamp</th>
+              </tr>
+            </thead>
+            <tbody id="overview-critical-tbody"></tbody>
+          </table>
+        </div>
+        <div class="card-foot">
+          <a class="btn btn-sm btn-secondary" href="threats.html" id="overview-view-all-link"></a>
+        </div>
+      </section>
+
+    </div>
+  </main>
+  <script src="js/config.js"></script>
+  <script src="js/core/dom.js"></script>
+  <script src="js/core/format.js"></script>
+  <script src="js/services/http-client.js"></script>
+  <script src="js/services/mock-data.js"></script>
+  <script src="js/services/report-builder.js"></script>
+  <script src="js/services/download.js"></script>
+  <script src="js/services/mock-api.js"></script>
+  <script src="js/services/api.js"></script>
+  <script src="js/pages/overview.js"></script>
 </body>
+
 </html>

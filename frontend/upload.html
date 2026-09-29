@@ -1,76 +1,114 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Log Analyzer - Upload</title>
-<script src="js/head.js"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Upload logs - Log Analyzer</title>
+  <script src="js/head.js"></script>
 </head>
-<body class="bg-surface-container-low text-on-surface font-body-md text-body-md antialiased min-h-screen flex flex-col m-0 p-0 selection:bg-primary-container selection:text-on-primary" data-page="upload">
-<div id="app-shell"></div>
-<script src="js/ui/layout.js"></script>
-<main class="w-full max-w-[1440px] mx-auto px-6 py-6 flex-1 flex flex-col">
-<div class="w-full max-w-[720px]">
-<div class="mb-6">
-<h1 class="text-[20px] leading-[26px] font-semibold text-gray-900 mb-1">Upload log file</h1>
-<p class="text-body-md text-gray-600">The file is parsed on the server and checked for known attack patterns.</p>
-</div>
-<div class="bg-surface-container-lowest border border-dashed border-[#8d8d8d] p-8 text-center rounded-none mb-4 transition-colors hover:border-gray-700" id="upload-dropzone">
-<p class="text-body-md text-gray-900 font-normal">
-          Drag a file here or
-          <label class="text-primary-container hover:underline cursor-pointer font-medium ml-1">
-            choose a file
-            <input accept=".log,.txt" class="hidden" id="upload-file-input" type="file"/>
-</label>
-</p>
-<p class="text-body-sm text-gray-500 mt-2">
-          SSH auth.log, Nginx access.log or UFW firewall log. .log or .txt, up to 16 MB.
-        </p>
-</div>
-<div class="mb-6 flex items-center gap-2 text-error text-[13px] leading-[18px] hidden" id="upload-error">
-<span class="material-symbols-outlined text-[15px] shrink-0 text-error">warning</span>
-<span id="upload-error-text"></span>
-</div>
-<div class="bg-surface-container-lowest border border-[#e0e0e0] p-4 mb-4 hidden" id="upload-progress-panel">
-<div class="flex items-baseline justify-between mb-3">
-<div class="flex items-baseline space-x-2">
-<span class="text-body-md font-semibold text-gray-900" id="upload-progress-filename"></span>
-<span class="text-[13px] leading-[18px] text-gray-500 font-code-sm" id="upload-progress-filesize"></span>
-</div>
-<span class="text-[13px] leading-[18px] text-gray-700 font-body-sm" id="upload-progress-type"></span>
-</div>
-<div class="w-full bg-[#e0e0e0] h-1 mb-3 rounded-none overflow-hidden">
-<div class="bg-primary-container h-full" id="upload-progress-bar" style="width: 0%"></div>
-</div>
-<div class="flex items-center justify-between text-[13px] leading-[18px]">
-<span class="text-gray-600 font-body-sm" id="upload-progress-status"></span>
-<button class="text-primary-container hover:underline text-[13px] cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary-container bg-transparent p-0 border-0" id="upload-cancel-button" type="button">
-            Cancel
-          </button>
-</div>
-</div>
-<div class="bg-surface-container-lowest border border-[#e0e0e0] p-4 hidden" id="upload-finished-panel">
-<p class="text-body-md font-normal text-gray-900 mb-3" id="upload-finished-text"></p>
-<div class="flex items-center">
-<a class="inline-flex items-center justify-center bg-primary-container hover:bg-[#0353e9] active:bg-[#002d9c] text-white px-4 py-1.5 text-[13px] font-medium rounded-none focus:outline-none focus:ring-2 focus:ring-primary-container focus:ring-offset-2" href="threats.html">
-            View threats
+
+<body class="bg-surface text-on-surface font-body-md text-body-md antialiased m-0 p-0" data-page="upload">
+  <div id="app-shell"></div>
+  <script src="js/ui/layout.js"></script>
+  <main class="app-content">
+    <div class="max-w-[760px]">
+
+      <div class="page-head">
+        <div class="min-w-0">
+          <h1 class="page-title">Upload a log file</h1>
+          <p class="page-sub">The file is parsed server-side and checked against the known attack patterns.</p>
+        </div>
+      </div>
+
+      <div class="card mb-4">
+        <div class="card-body">
+          <div id="upload-dropzone" class="dropzone px-6 py-12 sm:py-14 text-center">
+            <div class="w-12 h-12 mx-auto mb-4 rounded-xl bg-white border border-outline-variant flex items-center justify-center text-primary shadow-card">
+              <span class="material-symbols-outlined" data-icon="cloud_upload" style="font-size: 24px;">cloud_upload</span>
+            </div>
+            <p class="text-[15px] font-medium text-on-surface">
+              Drag and drop a log file here
+            </p>
+            <p class="text-[13px] text-secondary mt-1.5">
+              or
+              <label
+                class="text-primary hover:underline cursor-pointer font-medium inline-block">
+                browse from your computer
+                <input accept=".log,.txt" class="hidden" id="upload-file-input" type="file" />
+              </label>
+            </p>
+            <p class="text-[12px] text-secondary/80 mt-4">
+              SSH <span class="mono">auth.log</span>, Nginx <span class="mono">access.log</span> or UFW firewall log
+              &middot; <span class="mono">.log</span> or <span class="mono">.txt</span> &middot; up to 16&nbsp;MB
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="alert alert-error mb-4 hidden" id="upload-error" role="alert">
+        <span class="material-symbols-outlined fill shrink-0" data-icon="error"
+          style="font-variation-settings: 'FILL' 1; font-size: 19px;">error</span>
+        <span id="upload-error-text"></span>
+      </div>
+
+      <div class="card mb-4 hidden" id="upload-progress-panel">
+        <div class="card-body">
+          <div class="flex flex-wrap items-baseline justify-between gap-2 mb-3">
+            <div class="flex flex-wrap items-baseline gap-x-2 min-w-0">
+              <span class="text-[14px] font-semibold text-on-surface truncate" id="upload-progress-filename"></span>
+              <span class="mono text-secondary" id="upload-progress-filesize"></span>
+            </div>
+            <span class="badge sev-info" id="upload-progress-type"></span>
+          </div>
+          <div class="w-full bg-surface-container h-1.5 rounded-full overflow-hidden mb-3">
+            <div class="bg-primary h-full rounded-full transition-[width] duration-200" id="upload-progress-bar"
+              style="width: 0%"></div>
+          </div>
+          <div class="flex items-center justify-between text-[12.5px]">
+            <span class="text-secondary" id="upload-progress-status"></span>
+            <button class="btn btn-ghost btn-sm text-sev-critical" id="upload-cancel-button" type="button">
+              <span class="material-symbols-outlined" data-icon="close">close</span>
+              <span>Cancel</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card hidden" id="upload-finished-panel">
+        <div class="card-body">
+          <div class="flex items-start gap-3">
+            <div class="w-9 h-9 shrink-0 rounded-lg bg-success-bg border border-success-border text-success flex items-center justify-center">
+              <span class="material-symbols-outlined fill" data-icon="check_circle"
+                style="font-variation-settings: 'FILL' 1; font-size: 20px;">check_circle</span>
+            </div>
+            <p class="text-[14px] text-on-surface leading-relaxed" id="upload-finished-text"></p>
+          </div>
+        </div>
+        <div class="card-foot !justify-start">
+          <a class="btn btn-primary" href="threats.html">
+            <span class="material-symbols-outlined" data-icon="gpp_maybe">gpp_maybe</span>
+            <span>View threats</span>
           </a>
-<a class="inline-flex items-center justify-center bg-surface-container-lowest hover:bg-[#f4f4f4] border border-[#8d8d8d] text-gray-900 px-4 py-1.5 text-[13px] font-medium ml-3 rounded-none focus:outline-none focus:ring-2 focus:ring-primary-container focus:ring-offset-2" href="index.html">
-            View overview
+          <a class="btn btn-secondary" href="index.html">
+            <span class="material-symbols-outlined" data-icon="space_dashboard">space_dashboard</span>
+            <span>View overview</span>
           </a>
-</div>
-</div>
-</div>
-</main>
-<script src="js/config.js"></script>
-<script src="js/core/dom.js"></script>
-<script src="js/core/format.js"></script>
-<script src="js/services/http-client.js"></script>
-<script src="js/services/mock-data.js"></script>
-<script src="js/services/report-builder.js"></script>
-<script src="js/services/download.js"></script>
-<script src="js/services/mock-api.js"></script>
-<script src="js/services/api.js"></script>
-<script src="js/pages/upload.js"></script>
+        </div>
+      </div>
+
+    </div>
+  </main>
+  <script src="js/config.js"></script>
+  <script src="js/core/dom.js"></script>
+  <script src="js/core/format.js"></script>
+  <script src="js/services/http-client.js"></script>
+  <script src="js/services/mock-data.js"></script>
+  <script src="js/services/report-builder.js"></script>
+  <script src="js/services/download.js"></script>
+  <script src="js/services/mock-api.js"></script>
+  <script src="js/services/api.js"></script>
+  <script src="js/pages/upload.js"></script>
 </body>
+
 </html>

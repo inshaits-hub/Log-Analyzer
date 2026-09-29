@@ -1,108 +1,121 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Log Analyzer - Log Events</title>
-<script src="js/head.js"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Log events - Log Analyzer</title>
+  <script src="js/head.js"></script>
 </head>
-<body class="bg-surface-container-low text-on-surface font-body-md text-body-md antialiased min-h-screen flex flex-col m-0 p-0 selection:bg-primary-container selection:text-on-primary" data-page="log-events">
-<div id="app-shell"></div>
-<script src="js/ui/layout.js"></script>
-<main class="w-full max-w-[1440px] mx-auto px-6 py-6 flex-1 flex flex-col">
-<div class="flex items-baseline mb-4">
-<h1 class="text-headline-lg font-headline-lg text-on-surface tracking-tight">Log events</h1>
-<span class="font-body-lg text-body-lg text-secondary ml-2 font-normal" id="log-events-count">-</span>
-<span class="font-body-sm text-body-sm text-secondary ml-3 hidden" id="log-events-showing-note"></span>
-</div>
-<div class="my-4 flex flex-wrap items-center gap-3">
-<!-- Search Input -->
-<div class="relative w-64">
-<input class="w-full h-8 bg-surface-container-lowest border border-outline px-3 font-body-md text-body-md text-on-surface placeholder:text-secondary rounded-none focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container" id="log-events-search" placeholder="Search event or IP..." type="text"/>
-</div>
-<!-- Dropdown Select: Source -->
-<div class="relative">
-<select class="h-8 bg-surface-container-lowest border border-outline px-3 pr-8 font-body-md text-body-md text-on-surface rounded-none focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container cursor-pointer appearance-none" id="log-events-filter-source">
-<option value="">Source: All</option>
-<option value="ssh">Source: SSH</option>
-<option value="nginx">Source: Nginx</option>
-<option value="firewall">Source: Firewall</option>
-</select>
-<span class="material-symbols-outlined absolute right-2 top-2 pointer-events-none text-secondary text-[16px] leading-none" data-icon="expand_more">expand_more</span>
-</div>
-<!-- Dropdown Select: Action -->
-<div class="relative">
-<select class="h-8 bg-surface-container-lowest border border-outline px-3 pr-8 font-body-md text-body-md text-on-surface rounded-none focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container cursor-pointer appearance-none" id="log-events-filter-action">
-<option value="">Action: All</option>
-<option value="http">Action: HTTP Request</option>
-<option value="failed">Action: Failed Login</option>
-<option value="blocked">Action: Blocked Drop</option>
-<option value="success">Action: Successful Login</option>
-</select>
-<span class="material-symbols-outlined absolute right-2 top-2 pointer-events-none text-secondary text-[16px] leading-none" data-icon="expand_more">expand_more</span>
-</div>
-<!-- Filter Checkbox -->
-<label class="flex items-center gap-2 cursor-pointer select-none ml-1">
-<input class="w-4 h-4 rounded-none border border-on-surface text-primary-container focus:ring-primary-container focus:ring-offset-0 cursor-pointer" id="log-events-filter-threat" type="checkbox"/>
-<span class="text-body-md font-body-md text-on-surface">Only events linked to a threat</span>
-</label>
-</div>
-<div class="bg-surface-container-lowest border border-surface-container-highest shadow-none flex flex-col flex-1 overflow-hidden">
-<div class="overflow-x-auto">
-<table class="w-full text-left border-collapse">
-<thead>
-<tr class="bg-surface-container-low h-8 border-b border-outline">
-<th class="px-4 text-label-sm font-label-sm uppercase text-on-surface tracking-wider">Time</th>
-<th class="px-4 text-label-sm font-label-sm uppercase text-on-surface tracking-wider">Source</th>
-<th class="px-4 text-label-sm font-label-sm uppercase text-on-surface tracking-wider">IP</th>
-<th class="px-4 text-label-sm font-label-sm uppercase text-on-surface tracking-wider">Action</th>
-<th class="px-4 text-label-sm font-label-sm uppercase text-on-surface tracking-wider">User or path</th>
-<th class="px-4 text-label-sm font-label-sm uppercase text-on-surface tracking-wider">Status</th>
-<th class="px-4 text-label-sm font-label-sm uppercase text-on-surface tracking-wider w-20">Threat</th>
-</tr>
-</thead>
-<tbody class="divide-y divide-surface-container-highest" id="log-events-tbody"></tbody>
-</table>
-</div>
-<!-- Pagination Footer -->
-<div class="p-3 bg-surface-container-lowest border-t border-surface-container-highest flex justify-between items-center text-body-sm font-body-sm text-secondary mt-auto">
-<div>
-<span id="log-events-range">-</span>
-</div>
-<div class="flex items-center gap-4">
-<div class="flex items-center gap-2">
-<span>Items per page:</span>
-<div class="relative">
-<select class="h-6 bg-surface-container-lowest border border-surface-container-highest text-on-surface text-body-sm font-body-sm px-1.5 pr-5 rounded-none cursor-pointer appearance-none focus:outline-none focus:border-primary-container" id="log-events-page-size">
-<option>25</option>
-<option>50</option>
-<option>100</option>
-</select>
-<span class="material-symbols-outlined absolute right-0.5 top-0.5 pointer-events-none text-secondary text-[14px] leading-none" data-icon="expand_more">expand_more</span>
-</div>
-</div>
-<div class="flex items-center border border-surface-container-highest">
-<button class="w-7 h-7 flex items-center justify-center hover:bg-surface-container-low text-secondary border-r border-surface-container-highest transition-colors disabled:opacity-30 disabled:pointer-events-none" id="log-events-prev-button" title="Previous page" type="button">
-<span class="material-symbols-outlined text-[16px] leading-none" data-icon="chevron_left">chevron_left</span>
-</button>
-<button class="w-7 h-7 flex items-center justify-center hover:bg-surface-container-low text-on-surface transition-colors disabled:opacity-30 disabled:pointer-events-none" id="log-events-next-button" title="Next page" type="button">
-<span class="material-symbols-outlined text-[16px] leading-none" data-icon="chevron_right">chevron_right</span>
-</button>
-</div>
-</div>
-</div>
-</div>
-</main>
-<script src="js/config.js"></script>
-<script src="js/core/dom.js"></script>
-<script src="js/core/format.js"></script>
-<script src="js/core/pagination.js"></script>
-<script src="js/services/http-client.js"></script>
-<script src="js/services/mock-data.js"></script>
-<script src="js/services/report-builder.js"></script>
-<script src="js/services/download.js"></script>
-<script src="js/services/mock-api.js"></script>
-<script src="js/services/api.js"></script>
-<script src="js/pages/log-events.js"></script>
+
+<body class="bg-surface text-on-surface font-body-md text-body-md antialiased m-0 p-0" data-page="log-events">
+  <div id="app-shell"></div>
+  <script src="js/ui/layout.js"></script>
+  <main class="app-content">
+
+    <div class="page-head">
+      <div class="min-w-0">
+        <h1 class="page-title">Log events</h1>
+        <p class="page-sub">
+          <span id="log-events-count">-</span>
+          <span class="hidden" id="log-events-showing-note"></span>
+        </p>
+      </div>
+    </div>
+
+    <div class="card mb-4">
+      <div class="card-body !py-3">
+        <div class="flex flex-wrap items-end gap-3">
+          <div class="field flex-1 min-w-[220px]">
+            <label class="field-label" for="log-events-search">Search</label>
+            <div class="search-field">
+              <span class="material-symbols-outlined" data-icon="search">search</span>
+              <input class="input" id="log-events-search" placeholder="Event text, IP, user or path" type="text"
+                autocomplete="off" />
+            </div>
+          </div>
+          <div class="field w-full sm:w-auto sm:min-w-[152px]">
+            <label class="field-label" for="log-events-filter-source">Source</label>
+            <select class="select" id="log-events-filter-source">
+              <option value="">All sources</option>
+              <option value="ssh">SSH</option>
+              <option value="nginx">Nginx</option>
+              <option value="firewall">Firewall</option>
+            </select>
+          </div>
+          <div class="field w-full sm:w-auto sm:min-w-[176px]">
+            <label class="field-label" for="log-events-filter-action">Action</label>
+            <select class="select" id="log-events-filter-action">
+              <option value="">All actions</option>
+              <option value="http">HTTP Request</option>
+              <option value="failed">Failed Login</option>
+              <option value="blocked">Blocked Drop</option>
+              <option value="success">Successful Login</option>
+            </select>
+          </div>
+          <label
+            class="flex items-center gap-2 cursor-pointer select-none h-9 text-[12.5px] text-secondary shrink-0">
+            <input class="w-4 h-4 accent-primary" id="log-events-filter-threat" type="checkbox" />
+            <span>Only events linked to a threat</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="card overflow-hidden">
+      <div class="table-wrap custom-scroll">
+        <table class="dtable min-w-[820px]">
+          <thead>
+            <tr>
+              <th scope="col" class="w-[132px]">Time</th>
+              <th scope="col" class="w-[104px]">Source</th>
+              <th scope="col" class="w-[140px]">IP</th>
+              <th scope="col" class="w-[140px]">Action</th>
+              <th scope="col" class="min-w-[160px]">User or path</th>
+              <th scope="col" class="w-[92px]">Status</th>
+              <th scope="col" class="w-[96px]">Threat</th>
+            </tr>
+          </thead>
+          <tbody id="log-events-tbody"></tbody>
+        </table>
+      </div>
+      <footer
+        class="px-5 py-3 bg-surface-container-lowest border-t border-surface-container flex flex-wrap justify-between items-center gap-3 text-[12.5px] text-secondary select-none">
+        <div id="log-events-range">-</div>
+        <div class="flex items-center gap-4 sm:gap-5">
+          <div class="flex items-center gap-2">
+            <label class="hidden sm:inline" for="log-events-page-size">Rows</label>
+            <select class="select !w-auto !h-[30px] !py-0 !text-[12.5px]" id="log-events-page-size">
+              <option>25</option>
+              <option>50</option>
+              <option>100</option>
+            </select>
+          </div>
+          <div class="flex items-center gap-1">
+            <button class="btn btn-icon" id="log-events-prev-button" title="Previous page" type="button"
+              aria-label="Previous page">
+              <span class="material-symbols-outlined" data-icon="chevron_left">chevron_left</span>
+            </button>
+            <button class="btn btn-icon" id="log-events-next-button" title="Next page" type="button"
+              aria-label="Next page">
+              <span class="material-symbols-outlined" data-icon="chevron_right">chevron_right</span>
+            </button>
+          </div>
+        </div>
+      </footer>
+    </div>
+  </main>
+  <script src="js/config.js"></script>
+  <script src="js/core/dom.js"></script>
+  <script src="js/core/format.js"></script>
+  <script src="js/core/pagination.js"></script>
+  <script src="js/services/http-client.js"></script>
+  <script src="js/services/mock-data.js"></script>
+  <script src="js/services/report-builder.js"></script>
+  <script src="js/services/download.js"></script>
+  <script src="js/services/mock-api.js"></script>
+  <script src="js/services/api.js"></script>
+  <script src="js/pages/log-events.js"></script>
 </body>
+
 </html>

@@ -1,20 +1,21 @@
 /*
- * Renders the shared header + nav shell into #app-shell. Self-contained
- * (no dependency on config/core/services), so it can load and run before
- * the rest of the app scripts - keeps the nav visible as early as possible.
+ * Renders the shared app shell: a fixed dark navigation rail on desktop, a
+ * drawer + compact pill nav on mobile, and a sticky topbar. Mounts into
+ * #app-shell and re-parents the page's <main> underneath the topbar so the
+ * rail and the content column can be laid out independently.
+ *
+ * Self-contained (no dependency on config/core/services) so it can run before
+ * the rest of the app scripts and the nav appears immediately.
  */
 (function () {
   window.LogAnalyzer = window.LogAnalyzer || {};
   window.LogAnalyzer.ui = window.LogAnalyzer.ui || {};
 
-  var ACTIVE_TAB_CLASSES = "text-on-surface font-semibold border-b-[3px] border-primary-container h-full flex items-center px-4 font-label-md text-label-md transition-colors";
-  var INACTIVE_TAB_CLASSES = "text-secondary font-normal hover:text-on-surface h-full flex items-center px-4 font-label-md text-label-md transition-colors";
-
   var TABS = [
-    { label: "Overview", href: "index.html", key: "overview" },
-    { label: "Upload", href: "upload.html", key: "upload" },
-    { label: "Threats", href: "threats.html", key: "threats" },
-    { label: "Log events", href: "log-events.html", key: "log-events" }
+    { key: "overview", label: "Overview", short: "Overview", href: "index.html", icon: "space_dashboard" },
+    { key: "threats", label: "Threats", short: "Threats", href: "threats.html", icon: "gpp_maybe" },
+    { key: "log-events", label: "Log events", short: "Events", href: "log-events.html", icon: "receipt_long" },
+    { key: "upload", label: "Upload logs", short: "Upload", href: "upload.html", icon: "upload_file" }
   ];
 
   var ACTIVE_TAB_BY_PAGE = {
@@ -25,74 +26,89 @@
     "log-events": "log-events"
   };
 
-  var HEADER_HTML =
-    '<header class="bg-inverse-surface w-full h-12 flex justify-between items-center px-4 border-b border-outline select-none z-50">' +
-    '<div class="flex items-center">' +
-    '<span class="font-headline-sm text-headline-sm font-semibold text-surface-container-lowest tracking-normal">Log Analyzer</span>' +
-    '</div>' +
-    '<div class="flex items-center space-x-2">' +
-    '<button aria-label="Notifications" class="p-1.5 text-surface-variant hover:text-surface-container-lowest hover:bg-surface-container-highest/20 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-container" type="button">' +
-    '<span class="material-symbols-outlined text-[18px] leading-none block" data-icon="notifications">notifications</span>' +
-    '</button>' +
-    '<button aria-label="Help" class="p-1.5 text-surface-variant hover:text-surface-container-lowest hover:bg-surface-container-highest/20 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-container" type="button">' +
-    '<span class="material-symbols-outlined text-[18px] leading-none block" data-icon="help">help</span>' +
-    '</button>' +
-    '<button aria-label="Settings" class="p-1.5 text-surface-variant hover:text-surface-container-lowest hover:bg-surface-container-highest/20 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-container" type="button">' +
-    '<span class="material-symbols-outlined text-[18px] leading-none block" data-icon="settings">settings</span>' +
-    '</button>' +
-    '<div class="h-4 w-px bg-outline mx-1"></div>' +
-    '<div class="flex items-center ml-1">' +
-    '<div class="w-6 h-6 bg-secondary text-surface-container-lowest flex items-center justify-center font-label-sm text-label-sm font-semibold text-[10px]" title="User operator profile">' +
-    "          OP" +
-    "        </div>" +
+  // Title shown in the topbar per page. Keeps each page's <h1> in the content
+  // area, so the topbar uses a plain div rather than a second h1.
+  var PAGE_META = {
+    overview: { title: "Overview", sub: "Posture across ingested logs" },
+    threats: { title: "Threats", sub: "Detected events and risk scoring" },
+    "threat-detail": { title: "Threat detail", sub: "Single finding breakdown" },
+    "log-events": { title: "Log events", sub: "Raw parsed records" },
+    upload: { title: "Upload logs", sub: "Ingest a new log file" }
+  };
+
+  function esc(value) {
+    return String(value == null ? "" : value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function railLinkHtml(tab, activeKey) {
+    var isActive = tab.key === activeKey;
+    return (
+      '<a class="rail-link"' +
+      (isActive ? ' aria-current="page"' : "") +
+      ' href="' + tab.href + '">' +
+      '<span class="material-symbols-outlined" data-icon="' + tab.icon + '">' + tab.icon + '</span>' +
+      "<span>" + esc(tab.label) + "</span>" +
+      "</a>"
+    );
+  }
+
+  function pillHtml(tab, activeKey) {
+    var isActive = tab.key === activeKey;
+    return (
+      '<a class="topbar-pill"' +
+      (isActive ? ' aria-current="page"' : "") +
+      ' href="' + tab.href + '">' +
+      '<span class="material-symbols-outlined" data-icon="' + tab.icon + '">' + tab.icon + '</span>' +
+      "<span>" + esc(tab.short) + "</span>" +
+      "</a>"
+    );
+  }
+
+  var BRAND_HTML =
+    '<div class="rail-brand">' +
+    '<div class="rail-mark"><span class="material-symbols-outlined" data-icon="shield" ' +
+    'style="font-variation-settings:\'FILL\' 1;">shield</span></div>' +
+    '<div class="min-w-0">' +
+    '<div class="rail-title truncate">Log Analyzer</div>' +
+    '<div class="rail-sub truncate">Security Ops</div>' +
     "</div>" +
+    "</div>";
+
+  var RAIL_HTML =
+    '<aside class="app-rail" id="app-rail" aria-label="Primary">' +
+    BRAND_HTML +
+    '<div class="rail-label">Monitor</div>' +
+    '<nav class="rail-nav" id="app-rail-nav"></nav>' +
+    '<div class="rail-foot">' +
+    '<div class="rail-status" id="app-status">' +
+    '<span class="rail-dot" id="app-status-dot"></span>' +
+    '<span id="app-status-text">Connecting</span>' +
+    "</div>" +
+    "</div>" +
+    "</aside>";
+
+  var TOPBAR_HTML =
+    '<header class="app-topbar">' +
+    '<button class="btn btn-icon lg:hidden" id="app-rail-toggle" type="button" ' +
+    'aria-label="Open navigation" aria-expanded="false" aria-controls="app-rail">' +
+    '<span class="material-symbols-outlined" data-icon="menu">menu</span>' +
+    "</button>" +
+    '<div class="min-w-0 lg:hidden"><div class="text-[13px] font-semibold text-on-surface leading-tight" ' +
+    'id="app-topbar-title">Log Analyzer</div></div>' +
+    '<div class="topbar-tabs" id="app-topbar-tabs"></div>' +
+    '<div class="ml-auto flex items-center gap-2 shrink-0">' +
+    '<button class="btn btn-primary btn-sm hidden sm:inline-flex" id="app-upload-button" type="button">' +
+    '<span class="material-symbols-outlined" data-icon="add">add</span>' +
+    "<span>Upload log</span>" +
+    "</button>" +
+    '<div class="w-7 h-7 rounded-lg bg-rail text-white flex items-center justify-center ' +
+    'text-[10px] font-semibold select-none" title="Operator profile">OP</div>' +
     "</div>" +
     "</header>";
-
-  var UPLOAD_BUTTON_HTML =
-    '<button class="bg-primary-container hover:bg-primary text-on-primary text-body-md font-body-md font-medium px-4 h-8 inline-flex items-center justify-center border border-primary-container focus:outline-none focus:ring-2 focus:ring-primary-container focus:ring-offset-2 transition-colors" type="button">' +
-    "        Upload log file" +
-    "      </button>";
-
-  var UPLOAD_BUTTON_PLACEHOLDER_HTML = '<div class="flex items-center"></div>';
-
-  function buildTabHtml(tab, activeKey) {
-    var isActive = tab.key === activeKey;
-    var classes = isActive ? ACTIVE_TAB_CLASSES : INACTIVE_TAB_CLASSES;
-    var ariaCurrent = isActive ? ' aria-current="page"' : "";
-    return (
-      "<a" +
-      ariaCurrent +
-      ' class="' +
-      classes +
-      '" href="' +
-      tab.href +
-      '">' +
-      "        " +
-      tab.label +
-      "      </a>"
-    );
-  }
-
-  function buildNavHtml(dataPage, activeKey) {
-    var tabsHtml = TABS.map(function (tab) {
-      return buildTabHtml(tab, activeKey);
-    }).join("");
-
-    var trailingHtml =
-      dataPage === "upload" ? UPLOAD_BUTTON_PLACEHOLDER_HTML : UPLOAD_BUTTON_HTML;
-
-    return (
-      '<div class="bg-surface-container-lowest border-b border-surface-container-highest w-full px-6 flex justify-between items-stretch h-11 select-none">' +
-      '<nav aria-label="Main Navigation" class="flex items-stretch h-full space-x-0">' +
-      tabsHtml +
-      "</nav>" +
-      '<div class="flex items-center py-1.5">' +
-      trailingHtml +
-      "</div>" +
-      "</div>"
-    );
-  }
 
   function render() {
     var placeholder = document.getElementById("app-shell");
@@ -100,23 +116,105 @@
       return;
     }
 
-    var dataPage = document.body.getAttribute("data-page");
-    var activeKey = ACTIVE_TAB_BY_PAGE[dataPage];
+    var dataPage = document.body.getAttribute("data-page") || "overview";
+    var activeKey = ACTIVE_TAB_BY_PAGE[dataPage] || "overview";
+    var meta = PAGE_META[dataPage] || PAGE_META.overview;
 
-    placeholder.innerHTML = HEADER_HTML + buildNavHtml(dataPage, activeKey);
+    placeholder.innerHTML =
+      RAIL_HTML + TOPBAR_HTML + '<div class="rail-scrim" id="app-rail-scrim" hidden></div>';
 
-    if (dataPage !== "upload") {
-      var uploadButton = placeholder.querySelector("nav + div button");
-      if (uploadButton) {
-        uploadButton.addEventListener("click", function () {
-          window.location.href = "upload.html";
-        });
-      }
+    document.getElementById("app-rail-nav").innerHTML = TABS.map(function (tab) {
+      return railLinkHtml(tab, activeKey);
+    }).join("");
+
+    document.getElementById("app-topbar-tabs").innerHTML = TABS.map(function (tab) {
+      return pillHtml(tab, activeKey);
+    }).join("");
+
+    var titleEl = document.getElementById("app-topbar-title");
+    if (titleEl) {
+      titleEl.textContent = meta.title;
     }
+
+    /*
+     * The page's <main> is parsed *after* this script runs, and the rail and
+     * topbar are both position:fixed, so there is nothing to re-parent: the
+     * layout is pure CSS (see .app-rail / .app-topbar / .app-content in
+     * css/style.css) and <main> simply needs to clear the fixed topbar.
+     * Doing it this way avoids a visible reflow on load.
+     */
+    wireDrawer();
+    wireUploadButton(dataPage);
+    updateStatus();
   }
 
+  function wireDrawer() {
+    var rail = document.getElementById("app-rail");
+    var toggle = document.getElementById("app-rail-toggle");
+    var scrim = document.getElementById("app-rail-scrim");
+    if (!rail || !toggle || !scrim) {
+      return;
+    }
+
+    function setOpen(open) {
+      rail.classList.toggle("is-open", open);
+      scrim.classList.toggle("is-open", open);
+      scrim.hidden = !open;
+      toggle.setAttribute("aria-expanded", open ? "true" : "false");
+      toggle.setAttribute("aria-label", open ? "Close navigation" : "Open navigation");
+      var icon = toggle.querySelector(".material-symbols-outlined");
+      if (icon) {
+        icon.textContent = open ? "close" : "menu";
+      }
+    }
+
+    toggle.addEventListener("click", function () {
+      setOpen(!rail.classList.contains("is-open"));
+    });
+    scrim.addEventListener("click", function () {
+      setOpen(false);
+    });
+    document.addEventListener("keydown", function (event) {
+      if (event.key === "Escape" && rail.classList.contains("is-open")) {
+        setOpen(false);
+        toggle.focus();
+      }
+    });
+  }
+
+  function wireUploadButton(dataPage) {
+    var button = document.getElementById("app-upload-button");
+    if (!button || dataPage === "upload") {
+      return;
+    }
+    button.addEventListener("click", function () {
+      window.location.href = "upload.html";
+    });
+  }
+
+  /*
+   * The rail's status pill reports whether the UI is showing mock data or a
+   * live backend. config.js loads after this file, so the first render falls
+   * back to "Demo data" and DOMContentLoaded corrects it.
+   */
+  function updateStatus() {
+    var textEl = document.getElementById("app-status-text");
+    var dotEl = document.getElementById("app-status-dot");
+    if (!textEl || !dotEl) {
+      return;
+    }
+    var config = window.LogAnalyzer && window.LogAnalyzer.config;
+    var useMock = !config || config.USE_MOCK !== false;
+    textEl.textContent = useMock ? "Demo data" : "Live backend";
+    dotEl.classList.toggle("is-offline", false);
+    dotEl.style.background = useMock ? "#f59e0b" : "";
+  }
+
+  document.addEventListener("DOMContentLoaded", updateStatus);
+
   window.LogAnalyzer.ui.layout = {
-    render: render
+    render: render,
+    updateStatus: updateStatus
   };
 
   render();
