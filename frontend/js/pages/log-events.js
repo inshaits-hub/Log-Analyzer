@@ -4,24 +4,23 @@
   var dom = window.LogAnalyzer.core.dom;
   var pagination = window.LogAnalyzer.core.pagination;
 
-  var COLLAPSED_ROW_CLASS = "h-10 hover:bg-surface-container-low transition-colors duration-75 cursor-pointer";
-  var EXPANDED_PARENT_ROW_CLASS = "h-10 bg-surface-container-low/50 cursor-pointer";
-  var TD_TIME_CLASS = "px-4 font-code-md text-code-md text-on-surface";
-  var TD_SOURCE_CLASS = "px-4 font-body-md text-body-md text-on-surface";
-  var TD_IP_CLASS = "px-4 font-code-md text-code-md text-on-surface";
-  var TD_ACTION_CLASS = "px-4 font-body-md text-body-md text-on-surface";
-  var TD_USERPATH_CLASS = "px-4 font-code-md text-code-md text-on-surface";
-  var TD_STATUS_CLASS = "px-4 font-code-md text-code-md text-on-surface";
-  var TD_THREAT_EMPTY_CLASS = "px-4";
-  var TD_THREAT_FLAGGED_CLASS = "px-4 font-label-md text-label-md text-error font-medium";
+  var COLLAPSED_ROW_CLASS = "row-link";
+  var EXPANDED_PARENT_ROW_CLASS = "bg-surface-container-low/60";
+  var TD_TIME_CLASS = "mono";
+  var TD_SOURCE_CLASS = "";
+  var TD_IP_CLASS = "mono";
+  var TD_ACTION_CLASS = "";
+  var TD_USERPATH_CLASS = "mono text-secondary max-w-[18rem] truncate";
+  var TD_STATUS_CLASS = "mono text-secondary";
 
-  var EXPANSION_TD_CLASS = "p-4 bg-surface-container-lowest border-y border-surface-container-highest";
-  var RAW_LINE_BLOCK_CLASS = "bg-surface-container-low border border-surface-container-highest p-3 font-code-sm text-code-sm text-on-surface mb-4 overflow-x-auto select-all";
-  var PARSED_BOX_CLASS = "border border-surface-container-highest bg-surface-container-lowest";
-  var PARSED_ROW_CLASS = "grid grid-cols-[140px_1fr] border-b border-surface-container-highest text-body-sm font-body-sm";
-  var PARSED_ROW_LAST_CLASS = "grid grid-cols-[140px_1fr] text-body-sm font-body-sm";
-  var PARSED_LABEL_CLASS = "bg-surface-container-low px-3 py-1.5 text-secondary border-r border-surface-container-highest";
-  var PARSED_VALUE_CLASS = "px-3 py-1.5 font-code-sm text-code-sm text-on-surface";
+  var EXPANSION_TD_CLASS = "px-4 py-4 bg-surface-container-lowest border-y border-surface-container";
+  var RAW_LINE_BLOCK_CLASS =
+    "bg-surface-container rounded-lg border border-outline-variant p-3 mono text-on-surface mb-4 overflow-x-auto custom-scroll select-all";
+  var PARSED_BOX_CLASS = "border border-outline-variant bg-white rounded-lg overflow-hidden";
+  var PARSED_ROW_CLASS = "grid grid-cols-[132px_1fr] border-b border-surface-container text-[12.5px]";
+  var PARSED_ROW_LAST_CLASS = "grid grid-cols-[132px_1fr] text-[12.5px]";
+  var PARSED_LABEL_CLASS = "bg-surface-container-low px-3 py-2 text-secondary border-r border-surface-container";
+  var PARSED_VALUE_CLASS = "px-3 py-2 mono text-on-surface";
 
   var ACTION_LABELS = {
     http_request: "HTTP Request",
@@ -318,10 +317,12 @@
 
     var threatTd = document.createElement("td");
     if (d.linkedToThreat) {
-      threatTd.className = TD_THREAT_FLAGGED_CLASS;
-      threatTd.textContent = "threat";
-    } else {
-      threatTd.className = TD_THREAT_EMPTY_CLASS;
+      // A real badge rather than a bare red word, and the row links through
+      // to the log filtered by this event's IP.
+      var flag = document.createElement("span");
+      flag.className = "badge sev-critical";
+      flag.appendChild(document.createTextNode("Flagged"));
+      threatTd.appendChild(flag);
     }
     tr.appendChild(threatTd);
 

@@ -5,8 +5,8 @@
   var pagination = window.LogAnalyzer.core.pagination;
   var severity = window.LogAnalyzer.ui.severity;
 
-  var DISABLED_BUTTON_CLASS = "w-7 h-7 flex items-center justify-center text-outline-variant cursor-not-allowed";
-  var ENABLED_BUTTON_CLASS = "w-7 h-7 flex items-center justify-center text-on-surface hover:bg-surface-container-low transition-colors rounded-none focus:outline-none focus:ring-1 focus:ring-primary-container";
+  var DISABLED_BUTTON_CLASS = "btn btn-icon opacity-40 pointer-events-none";
+  var ENABLED_BUTTON_CLASS = "btn btn-icon";
 
   var countEl = document.getElementById("threats-count");
   var searchInput = document.getElementById("threats-search");
@@ -91,38 +91,38 @@
 
   function buildRow(item) {
     var tr = document.createElement("tr");
-    tr.className = "hover:bg-surface-container-low transition-colors h-9 cursor-pointer";
+    tr.className = "row-link";
     tr.addEventListener("click", function () {
       window.location.href = "threat-detail.html?id=" + item.id;
     });
 
     var severityTd = document.createElement("td");
-    severityTd.className = "px-4 py-1.5 whitespace-nowrap";
-    severityTd.appendChild(severity.buildTableIndicator(item.severity));
+    severityTd.appendChild(severity.buildPill(item.severity));
     tr.appendChild(severityTd);
 
     var typeTd = document.createElement("td");
-    typeTd.className = "px-4 py-1.5 whitespace-nowrap text-on-surface font-body-md text-body-md font-medium";
+    typeTd.className = "font-medium";
     typeTd.textContent = item.title;
     tr.appendChild(typeTd);
 
     var ipTd = document.createElement("td");
-    ipTd.className = "px-4 py-1.5 whitespace-nowrap font-code-md text-code-md text-on-surface-variant";
+    ipTd.className = "mono text-secondary";
     ipTd.textContent = item.ip;
     tr.appendChild(ipTd);
 
     var detailsTd = document.createElement("td");
-    detailsTd.className = "px-4 py-1.5 whitespace-nowrap font-code-md text-code-md text-on-surface";
+    detailsTd.className = "mono text-secondary max-w-[22rem] truncate";
+    detailsTd.setAttribute("title", item.details);
     detailsTd.textContent = item.details;
     tr.appendChild(detailsTd);
 
     var riskTd = document.createElement("td");
-    riskTd.className = "px-4 py-1.5 whitespace-nowrap text-right font-code-md text-code-md text-on-surface";
+    riskTd.className = "num";
     riskTd.textContent = format.formatNumber(item.risk_score);
     tr.appendChild(riskTd);
 
     var timestampTd = document.createElement("td");
-    timestampTd.className = "px-4 py-1.5 whitespace-nowrap font-code-sm text-code-sm text-on-surface";
+    timestampTd.className = "num mono text-secondary";
     timestampTd.textContent = format.isoDateTime(item.timestamp);
     tr.appendChild(timestampTd);
 
