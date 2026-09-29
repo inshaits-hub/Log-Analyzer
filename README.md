@@ -32,7 +32,10 @@ docker compose run --rm cli        # one-shot CLI run
 ## Run the dashboard
 
 The frontend is plain HTML/CSS/JS with no build step, but it must be served
-over HTTP (not opened as `file://`) and it needs the API running.
+over HTTP (not opened as `file://`) and it needs the API running. Start each
+in its own terminal.
+
+macOS / Linux:
 
 ```bash
 # terminal 1 - API seeded with demo data
@@ -43,10 +46,29 @@ cd frontend && python3 -m http.server 8123
 # open http://127.0.0.1:8123
 ```
 
-The dashboard is live by default, so it reads from the API on port 5000 and
-the rail shows **Live backend**. Append `?mock=1` to any page to browse the
-built-in fixture data instead (**Demo data**), or `?mock=empty` /
-`?mock=error` for those states.
+Windows (PowerShell):
+
+```powershell
+# terminal 1 - API seeded with demo data
+cd backend
+py -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+py scripts\build_demo_db.py --fresh
+py src\app.py
+
+# terminal 2 - static server for the dashboard
+cd frontend
+py -m http.server 8123
+# open http://127.0.0.1:8123
+```
+
+On `localhost`/`127.0.0.1` the dashboard automatically targets the API at
+`http://127.0.0.1:5000`, so the rail shows **Live backend**. (The backend
+allows cross-origin requests, so the two ports do not need a proxy for local
+development.) Append `?mock=1` to any page to browse the built-in fixture
+data instead (**Demo data**), or `?mock=empty` / `?mock=error` for those
+states.
 
 ## Deployment
 
