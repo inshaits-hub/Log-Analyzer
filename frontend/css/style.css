@@ -228,6 +228,14 @@ body {
   background: #ef4444;
 }
 
+.rail-dot.is-mock {
+  background: #f59e0b;
+}
+
+.rail-dot.is-checking {
+  background: #64748b;
+}
+
 /* Mobile drawer */
 .rail-scrim {
   position: fixed;

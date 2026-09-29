@@ -193,21 +193,65 @@
   }
 
   /*
-   * The rail's status pill reports whether the UI is showing mock data or a
-   * live backend. config.js loads after this file, so the first render falls
-   * back to "Demo data" and DOMContentLoaded corrects it.
+   * The rail's status pill reports where the data on screen comes from.
+   * config.js loads after this file, so the first render falls back to
+   * "Connecting" and DOMContentLoaded corrects it.
+   *
+   * When mock mode is off we actually probe the API rather than just
+   * echoing the config, because "configured for live" and "backend
+   * reachable" are different things - a deployed dashboard pointing at a
+   * dead API should say so instead of looking healthy next to empty tables.
    */
-  function updateStatus() {
+  function setStatus(text, tone) {
     var textEl = document.getElementById("app-status-text");
     var dotEl = document.getElementById("app-status-dot");
     if (!textEl || !dotEl) {
       return;
     }
+    textEl.textContent = text;
+    dotEl.classList.toggle("is-offline", tone === "offline");
+    dotEl.classList.toggle("is-mock", tone === "mock");
+    dotEl.classList.toggle("is-checking", tone === "checking");
+  }
+
+  function probeHealth(baseUrl) {
+    var controller = typeof AbortController !== "undefined" ? new AbortController() : null;
+    var timer = setTimeout(function () {
+      if (controller) {
+        controller.abort();
+      }
+    }, 5000);
+
+    return fetch(baseUrl + "/health", { signal: controller ? controller.signal : undefined })
+      .then(function (response) {
+        if (!response.ok) {
+          throw new Error("HTTP " + response.status);
+        }
+        setStatus("Live backend", "live");
+      })
+      .catch(function () {
+        setStatus("Backend offline", "offline");
+      })
+      .then(function () {
+        clearTimeout(timer);
+      });
+  }
+
+  function updateStatus() {
+    if (!document.getElementById("app-status-text")) {
+      return;
+    }
     var config = window.LogAnalyzer && window.LogAnalyzer.config;
-    var useMock = !config || config.USE_MOCK !== false;
-    textEl.textContent = useMock ? "Demo data" : "Live backend";
-    dotEl.classList.toggle("is-offline", false);
-    dotEl.style.background = useMock ? "#f59e0b" : "";
+    if (!config) {
+      setStatus("Connecting", "checking");
+      return;
+    }
+    if (config.USE_MOCK) {
+      setStatus("Demo data", "mock");
+      return;
+    }
+    setStatus("Checking API", "checking");
+    probeHealth(config.BASE_URL);
   }
 
   document.addEventListener("DOMContentLoaded", updateStatus);
