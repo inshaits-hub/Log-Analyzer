@@ -448,3 +448,62 @@ def test_severity_counts():
 def test_process_alerts_handles_empty_input():
     assert alert_manager.process_alerts([]) == []
     assert alert_manager.process_alerts(None) == []
+
+
+def test_merging_alerts_sums_attempts_without_losing_any():
+    """Deduplication must never drop attempt counts, only regroup them."""
+    raw = [
+        {
+            "type": "SQL_INJECTION",
+            "ip": "1.2.3.4",
+            "severity": "HIGH",
+            "details": "probe",
+            "timestamp": "2026-09-28 09:13:05",
+            "risk_score": 40,
+            "attempts": 3,
+        },
+        {
+            "type": "SQL_INJECTION",
+            "ip": "1.2.3.4",
+            "severity": "HIGH",
+            "details": "probe",
+            "timestamp": "2026-09-28 09:13:45",
+            "risk_score": 40,
+            "attempts": 4,
+        },
+        {
+            "type": "SQL_INJECTION",
+            "ip": "1.2.3.4",
+            "severity": "HIGH",
+            "details": "probe",
+            "timestamp": "2026-09-28 09:30:00",  # far away: separate alert
+            "risk_score": 40,
+            "attempts": 5,
+        },
+    ]
+    alerts = alert_manager.process_alerts(raw)
+
+    assert len(alerts) == 2
+    assert sorted(a["attempts"] for a in alerts) == [5, 7]
+    assert sum(a["attempts"] for a in alerts) == sum(t["attempts"] for t in raw)
+    # occurrences counts the merged threats; attempts counts the log events.
+    merged = [a for a in alerts if a["occurrences"] == 2][0]
+    assert merged["attempts"] == 7
+
+
+def test_alert_attempts_falls_back_to_one():
+    alerts = alert_manager.process_alerts(
+        [
+            {
+                "type": "PORT_SCAN",
+                "ip": "1.2.3.4",
+                "severity": "HIGH",
+                "details": "scan",
+                "timestamp": "2026-09-28 09:13:05",
+                "risk_score": 30,
+            }
+        ]
+    )
+    assert alerts[0]["attempts"] == 1
+    assert alerts[0]["payload"]["attempts"] == 1
+

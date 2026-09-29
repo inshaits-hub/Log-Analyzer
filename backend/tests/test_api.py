@@ -48,8 +48,45 @@ def test_upload_parses_detects_and_persists(client, auth_lines, web_lines):
     threats = client.get("/api/v1/threats").get_json()
     assert len(threats) == data["threats_detected"]
     for threat in threats:
-        assert {"type", "ip", "severity", "badge", "details"} <= set(threat)
+        assert {"type", "ip", "severity", "badge", "details", "attempts"} <= set(threat)
         assert threat["severity"] in {"CRITICAL", "HIGH", "MEDIUM", "LOW"}
+        assert threat["attempts"] >= 1
+
+
+def test_threats_expose_attempt_count(client, brute_lines):
+    _upload(client, brute_lines)
+    threats = client.get("/api/v1/threats").get_json()
+
+    brute = [t for t in threats if t["type"] == "SSH_BRUTE_FORCE"]
+    assert brute
+    assert brute[0]["attempts"] == 6
+
+
+def test_threats_attempts_survive_legacy_database(tmp_path, monkeypatch):
+    """A database written before the ``attempts`` column is migrated on init."""
+    from src import database
+
+    db_path = tmp_path / "legacy.db"
+    conn = database.get_connection(db_path)
+    try:
+        conn.executescript(
+            "CREATE TABLE threats (id INTEGER PRIMARY KEY AUTOINCREMENT, "
+            "type TEXT NOT NULL, ip TEXT, severity TEXT, details TEXT, "
+            "timestamp TEXT, risk_score INTEGER DEFAULT 0)"
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+    monkeypatch.setenv("DB_PATH", str(db_path))
+    database.init_db()
+
+    conn = database.get_connection(db_path)
+    try:
+        columns = {row["name"] for row in conn.execute("PRAGMA table_info(threats)")}
+    finally:
+        conn.close()
+    assert "attempts" in columns
 
 
 def test_upload_accumulates_across_files(client, auth_lines, web_lines):

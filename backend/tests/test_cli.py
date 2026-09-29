@@ -126,3 +126,63 @@ def test_cli_threshold_flag(tmp_path, demo_log_path, capsys, restore_db_path):
     # threshold 100: no brute-force alerts, but web exploits still fire
     assert "SSH Brute-Force" not in out
     assert "SQL Injection" in out
+
+
+def test_cli_output_is_plain_without_a_tty(tmp_path, demo_log_path, capsys, restore_db_path):
+    """capsys is not a terminal, so ANSI codes must stay out of the output."""
+    code = cli.main(["--log", str(demo_log_path), "--export", "none", "--no-save"])
+
+    assert code == 0
+    assert "\033[" not in capsys.readouterr().out
+
+
+def test_cli_color_flag_emits_ansi(tmp_path, demo_log_path, capsys, restore_db_path):
+    code = cli.main(
+        ["--log", str(demo_log_path), "--export", "none", "--no-save", "--color"]
+    )
+
+    assert code == 0
+    out = capsys.readouterr().out
+    assert "\033[" in out
+    # Badges are colored, but the readable text survives intact.
+    assert "CRITICAL" in out
+    assert "SSH Brute-Force" in out
+
+
+def test_cli_no_color_flag_and_env_override(
+    tmp_path, demo_log_path, capsys, restore_db_path, monkeypatch
+):
+    args = ["--log", str(demo_log_path), "--export", "none", "--no-save"]
+    assert cli.main(args + ["--color"]) == 0
+    assert "\033[" in capsys.readouterr().out
+
+    assert cli.main(args + ["--no-color"]) == 0
+    assert "\033[" not in capsys.readouterr().out
+
+    monkeypatch.setenv("NO_COLOR", "1")
+    assert cli.main(args + ["--color"]) == 0
+    # An explicit --color still wins over the environment.
+    assert "\033[" in capsys.readouterr().out
+
+
+def test_cli_quiet_prints_bare_paths_even_with_color(
+    tmp_path, demo_log_path, capsys, restore_db_path
+):
+    code = cli.main(
+        [
+            "--log",
+            str(demo_log_path),
+            "--export",
+            "json",
+            "--output",
+            str(tmp_path),
+            "--no-save",
+            "--quiet",
+            "--color",
+        ]
+    )
+
+    assert code == 0
+    out = capsys.readouterr().out
+    assert "\033[" not in out, "quiet mode is consumed by scripts, never colorize it"
+    assert out.strip().endswith(".json")

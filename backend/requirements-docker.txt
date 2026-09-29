@@ -1,0 +1,5 @@
+# Container-only dependencies. The local CLI/API workflow needs nothing but
+# Flask, so requirements.txt stays minimal; gunicorn is only required to serve
+# the image, where the Flask development server is not appropriate.
+-r requirements.txt
+gunicorn>=21.2,<24.0
