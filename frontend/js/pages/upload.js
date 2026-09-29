@@ -110,7 +110,14 @@
       })
       .catch(function (error) {
         progressPanel.classList.add("hidden");
-        if (error && error.message === "Upload cancelled") {
+        // Detect a cancel by error.name. Matching on the message text only
+        // worked for the mock; a real AbortController abort surfaces as a
+        // DOMException named "AbortError", so the user used to be told the
+        // upload had FAILED right after they deliberately cancelled it.
+        if (error && (error.name === "AbortError" || error.message === "Upload cancelled")) {
+          // User-initiated cancel: return to the idle dropzone silently
+          // rather than showing an error they did not cause.
+          currentAbortController = null;
           return;
         }
         showError("Upload failed: " + (error && error.message ? error.message : "unknown error"));
@@ -118,17 +125,59 @@
   }
 
   fileInput.addEventListener("change", function () {
-    if (fileInput.files && fileInput.files[0]) {
-      handleFile(fileInput.files[0]);
+    var file = fileInput.files && fileInput.files[0];
+    // Clear the selection immediately so re-picking the SAME path always
+    // fires a fresh `change` event. Without this, a user who rejected a
+    // file, fixed it, and re-selected it got no event and no feedback.
+    fileInput.value = "";
+    if (file) {
+      handleFile(file);
     }
   });
 
-  dropzone.addEventListener("dragover", function (event) {
+  // dragenter/dragleave fire for every child element the cursor crosses,
+  // so a plain toggle flickers. Track a depth counter instead.
+  var dragDepth = 0;
+
+  function setDragActive(active) {
+    // Toggles one dedicated class (styled in css/style.css) rather than
+    // swapping two competing Tailwind border-colour utilities, which would
+    // resolve by stylesheet order instead of by what we asked for.
+    dropzone.classList.toggle("is-dragging", active);
+  }
+
+  ["dragenter", "dragover"].forEach(function (type) {
+    dropzone.addEventListener(type, function (event) {
+      event.preventDefault();
+      if (event.dataTransfer) {
+        event.dataTransfer.dropEffect = "copy";
+      }
+      if (type === "dragenter") {
+        dragDepth += 1;
+        setDragActive(true);
+      }
+    });
+  });
+
+  dropzone.addEventListener("dragleave", function (event) {
     event.preventDefault();
+    dragDepth = Math.max(0, dragDepth - 1);
+    if (dragDepth === 0) {
+      setDragActive(false);
+    }
+  });
+
+  // If the user drops the file anywhere outside the zone the drag never
+  // ends with a dragleave, which would leave the highlight stuck on.
+  window.addEventListener("dragend", function () {
+    dragDepth = 0;
+    setDragActive(false);
   });
 
   dropzone.addEventListener("drop", function (event) {
     event.preventDefault();
+    dragDepth = 0;
+    setDragActive(false);
     var file =
       event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0];
     if (file) {

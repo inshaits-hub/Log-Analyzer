@@ -1,10 +1,9 @@
 (function () {
   var api = window.LogAnalyzer.Api;
+  var config = window.LogAnalyzer.config;
   var format = window.LogAnalyzer.core.format;
   var dom = window.LogAnalyzer.core.dom;
   var severity = window.LogAnalyzer.ui.severity;
-
-  var MALICIOUS_THRESHOLD = 70;
 
   var searchInput = document.getElementById("detail-search");
   var severitySelect = document.getElementById("detail-filter-severity");
@@ -30,6 +29,8 @@
   var ruleEl = document.getElementById("detail-rule");
   var detailsEl = document.getElementById("detail-details");
   var riskScoreEl = document.getElementById("detail-risk-score");
+  var riskMaxEl = document.getElementById("detail-risk-max");
+  var riskBar = document.getElementById("detail-risk-bar");
   var maliciousTag = document.getElementById("detail-malicious-tag");
 
   var copyButton = document.getElementById("detail-copy-button");
@@ -56,7 +57,8 @@
     return allThreats
       .filter(function (item) {
         if (searchTerm) {
-          var haystack = (item.ip + " " + item.title + " " + item.type + " " + item.details).toLowerCase();
+          var haystack =
+            (displayIp(item.ip) + " " + item.title + " " + item.type + " " + item.details).toLowerCase();
           if (haystack.indexOf(searchTerm) === -1) {
             return false;
           }
@@ -71,6 +73,13 @@
       });
   }
 
+  // Threats can be raised without a source IP (e.g. an internal-only
+  // finding). `item.ip` is then null, and assigning it straight to
+  // textContent renders the literal word "null".
+  function displayIp(ip) {
+    return ip ? ip : "-";
+  }
+
   function updateCountText(count) {
     countText.textContent =
       count === 0 ? "Displaying 0 of 0 threats" : "Displaying 1-" + count + " of " + count + " threats";
@@ -79,70 +88,51 @@
   function buildTableRow(item, isSelected) {
     var tr = document.createElement("tr");
     tr.className = isSelected
-      ? "bg-primary-fixed/20 border-l-[3px] border-l-primary-container cursor-pointer"
-      : "bg-surface-container-lowest hover:bg-surface-container-low cursor-pointer transition-colors";
+      ? "row-link bg-primary/[0.06] shadow-[inset_3px_0_0_0_#2563eb]"
+      : "row-link";
 
     var chevronTd = document.createElement("td");
     if (isSelected) {
-      chevronTd.className = "px-3 py-2 text-center text-primary";
+      chevronTd.className = "text-center text-primary";
       var chevron = document.createElement("span");
       chevron.className = "material-symbols-outlined";
       chevron.setAttribute("data-icon", "chevron_right");
       chevron.textContent = "chevron_right";
       chevronTd.appendChild(chevron);
     } else {
-      chevronTd.className = "px-3 py-2 text-center text-outline";
+      chevronTd.className = "text-center text-outline-variant";
     }
     tr.appendChild(chevronTd);
 
     var nameTd = document.createElement("td");
-    nameTd.className = "px-3 py-2";
     var nameLine1 = document.createElement("div");
-    nameLine1.className = "font-label-md text-label-md text-on-surface";
+    nameLine1.className = "text-[13px] font-medium text-on-surface";
     nameLine1.textContent = item.title;
     var nameLine2 = document.createElement("div");
-    nameLine2.className = "text-secondary font-code-sm text-code-sm";
-    nameLine2.textContent = "rule: " + item.type;
+    nameLine2.className = "text-[11px] mono text-secondary";
+    nameLine2.textContent = item.type;
     nameTd.appendChild(nameLine1);
     nameTd.appendChild(nameLine2);
     tr.appendChild(nameTd);
 
     var ipTd = document.createElement("td");
-    ipTd.className = isSelected
-      ? "px-3 py-2 font-code-md text-code-md font-medium text-on-surface"
-      : "px-3 py-2 font-code-md text-code-md text-on-surface";
-    ipTd.textContent = item.ip;
+    ipTd.className = "mono " + (isSelected ? "font-medium" : "text-secondary");
+    ipTd.textContent = displayIp(item.ip);
     tr.appendChild(ipTd);
 
     var severityTd = document.createElement("td");
-    severityTd.className = "px-3 py-2";
     severityTd.appendChild(severity.buildPill(item.severity));
     tr.appendChild(severityTd);
 
     var riskTd = document.createElement("td");
-    riskTd.className = isSelected
-      ? "px-3 py-2 text-right font-code-md text-code-md font-medium text-on-surface"
-      : "px-3 py-2 text-right font-code-md text-code-md text-on-surface";
+    riskTd.className = "num " + (isSelected ? "font-semibold" : "");
     riskTd.textContent = format.formatNumber(item.risk_score);
     tr.appendChild(riskTd);
 
     var timestampTd = document.createElement("td");
-    timestampTd.className = "px-3 py-2 font-code-sm text-code-sm text-secondary";
+    timestampTd.className = "mono text-secondary";
     timestampTd.textContent = format.shortDateTime(item.timestamp);
     tr.appendChild(timestampTd);
-
-    var actionTd = document.createElement("td");
-    actionTd.className = "px-3 py-2";
-    var actionSpan = document.createElement("span");
-    if (isSelected) {
-      actionSpan.className = "text-primary-container font-label-sm text-label-sm hover:underline";
-      actionSpan.textContent = "Active";
-    } else {
-      actionSpan.className = "text-secondary hover:text-on-surface font-label-sm text-label-sm";
-      actionSpan.textContent = "Inspect";
-    }
-    actionTd.appendChild(actionSpan);
-    tr.appendChild(actionTd);
 
     tr.addEventListener("click", function () {
       selectThreat(item.id);
@@ -192,7 +182,7 @@
           container.appendChild(document.createTextNode(text.slice(cursor, matchIndex)));
         }
         var ipSpan = document.createElement("span");
-        ipSpan.className = "text-error font-medium";
+        ipSpan.className = "text-sev-critical-text font-medium";
         ipSpan.textContent = ip;
         container.appendChild(ipSpan);
         cursor = matchIndex + ip.length;
@@ -264,7 +254,12 @@
     var shownCount = Math.min(MAX_LOG_LINES_SHOWN, count);
     logLinesShowing.textContent = "Showing " + shownCount + " latest";
     logLinesShowAll.classList.remove("hidden");
-    logLinesShowAll.href = "log-events.html?ip=" + encodeURIComponent(ip);
+    // No IP to deep-link on; keep the "show all" row hidden rather than
+    // sending the user to log-events.html?ip=null, which matches nothing.
+    logLinesShowAll.classList.toggle("hidden", !ip);
+    if (ip) {
+      logLinesShowAll.href = "log-events.html?ip=" + encodeURIComponent(ip);
+    }
 
     events.slice(0, shownCount).forEach(function (event) {
       logLinesBox.appendChild(buildLogLineDiv(event, ip));
@@ -285,8 +280,17 @@
 
   function loadEventsForThreat(item) {
     var requestedId = item.id;
+    // Only send `ip` when the threat actually has one. The backend guards
+    // its filter with `if ip:`, so passing ip="" (what `item.ip || ""` did)
+    // disabled the filter and returned the newest events from ANY host,
+    // which then got rendered under "Matching log lines" for this threat.
+    var params = { limit: 200 };
+    if (item.ip) {
+      params.ip = item.ip;
+    }
+
     api
-      .getEvents({ ip: item.ip, limit: 200 })
+      .getEvents(params)
       .then(function (data) {
         if (selectedId !== requestedId) {
           return;
@@ -311,18 +315,21 @@
     footerEl.classList.remove("hidden");
 
     var meta = severity.getPanelHeaderMeta(item.severity);
-    severityDot.className = "inline-block w-2 h-2";
+    severityDot.className = "sev-dot w-2.5 h-2.5";
     severityDot.style.backgroundColor = meta.dotHex;
-    severityLabel.className = "font-label-sm text-label-sm " + meta.textClass + " font-semibold uppercase tracking-wider";
+    severityLabel.className = meta.textClass + " text-[11px] font-semibold uppercase tracking-[0.04em]";
     severityLabel.textContent = meta.label;
     titleEl.textContent = item.title;
 
-    ipEl.textContent = item.ip;
+    ipEl.textContent = displayIp(item.ip);
     detectedAtEl.textContent = format.isoDateTime(item.timestamp);
     ruleEl.textContent = item.title + " (" + item.type + ")";
     detailsEl.textContent = item.details;
-    riskScoreEl.textContent = item.risk_score + " / 100";
-    maliciousTag.classList.toggle("hidden", item.risk_score < MALICIOUS_THRESHOLD);
+    var riskScore = Number(item.risk_score) || 0;
+    riskScoreEl.textContent = format.formatNumber(riskScore);
+    riskMaxEl.textContent = format.formatNumber(config.RISK_SCORE_MAX);
+    riskBar.style.width = Math.min(100, Math.max(0, (riskScore / config.RISK_SCORE_MAX) * 100)) + "%";
+    maliciousTag.classList.toggle("hidden", riskScore < config.MALICIOUS_SCORE_THRESHOLD);
 
     currentSelectedItem = item;
 
@@ -407,7 +414,7 @@
   }
 
   function handleCopyIp() {
-    if (!currentSelectedItem) {
+    if (!currentSelectedItem || !currentSelectedItem.ip) {
       return;
     }
     navigator.clipboard
