@@ -85,13 +85,22 @@ frontend/
 
 ## Mock vs. real data
 
-`js/config.js` has a `USE_MOCK` flag. With `USE_MOCK: true` (the current
-default) every call goes to `mock-api.js` and the Flask backend is never
-contacted, so the UI can be developed and demoed with no server. Set it
-to `false` to talk to the real API at `BASE_URL`.
+`js/config.js` resolves two things at runtime, so the same files work
+locally and in deployment without edits:
 
-`?mock=empty` and `?mock=error` are frontend-only switches for previewing
-the empty and error states; they are not API features.
+- `BASE_URL` — defaults to `/api/v1` (same origin, the nginx setup). Override
+  with `<meta name="api-base-url" content="...">` or
+  `window.__LOG_ANALYZER_CONFIG__ = { baseUrl: "..." }` for a split-origin
+  host.
+- `USE_MOCK` — **off by default**, so the dashboard reads the real API.
+  `?mock=1` switches to `mock-api.js` and the Flask backend is never
+  contacted, so pages can still be demoed with no server. `?mock=empty` and
+  `?mock=error` preview those states.
+
+Mock is opt-in on purpose: a deployed dashboard left on mock would show
+invented data while looking healthy. The rail's status pill reports which
+source is in use and probes `/api/v1/health`, showing **Backend offline** if
+the API cannot be reached.
 
 ## Design system
 

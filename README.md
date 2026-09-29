@@ -5,7 +5,7 @@ threats with heuristic rules, and reports the results through both a REST API
 and a standalone CLI.
 
 - `backend/` — Flask REST API, heuristic threat engine, CLI, reports, tests
-- `frontend/` — dashboard UI (not yet built)
+- `frontend/` — dashboard UI: overview, threats, log events, upload
 - `index.html` — project landing page, module specs and the API contract
 
 ## Quick start
@@ -25,9 +25,56 @@ Or with Docker:
 
 ```bash
 cd backend
-docker compose up --build          # API on http://localhost:5000
+docker compose up --build          # API only, on http://localhost:5000
 docker compose run --rm cli        # one-shot CLI run
 ```
+
+## Run the dashboard
+
+The frontend is plain HTML/CSS/JS with no build step, but it must be served
+over HTTP (not opened as `file://`) and it needs the API running.
+
+```bash
+# terminal 1 - API seeded with demo data
+cd backend && ./run_web.sh --demo
+
+# terminal 2 - static server for the dashboard
+cd frontend && python3 -m http.server 8123
+# open http://127.0.0.1:8123
+```
+
+The dashboard is live by default, so it reads from the API on port 5000 and
+the rail shows **Live backend**. Append `?mock=1` to any page to browse the
+built-in fixture data instead (**Demo data**), or `?mock=empty` /
+`?mock=error` for those states.
+
+## Deployment
+
+One command runs the whole stack — Flask behind gunicorn, plus nginx serving
+the dashboard and reverse-proxying `/api/`:
+
+```bash
+docker compose up --build          # dashboard on http://localhost:8080
+cp .env.example .env               # optional: set WEB_PORT / SECRET_KEY first
+docker compose down -v             # stop and discard the database
+```
+
+Because nginx serves the pages and the API from the same origin, the
+frontend's default `BASE_URL` of `/api/v1` just works — no CORS, no
+hardcoded host. Deploying the two on separate hosts instead? Set the API
+address without editing code, either in `frontend/index.html`'s `<head>`:
+
+```html
+<meta name="api-base-url" content="https://api.example.com/api/v1">
+```
+
+or via an inline script before `js/config.js`:
+
+```html
+<script>window.__LOG_ANALYZER_CONFIG__ = { baseUrl: "https://api.example.com/api/v1" };</script>
+```
+
+Set `baseUrl` and `useMock` in the same object to override both.
 
 ## Folder layout
 
@@ -40,7 +87,10 @@ Cybersecurity Log Analyzer/
 │   ├── scripts/            # demo database builder
 │   ├── Dockerfile          # gunicorn image, non-root, HEALTHCHECK
 │   └── run_cli.sh / run_web.sh
-├── frontend/               # dashboard UI
+├── frontend/               # dashboard UI (static, no build step)
+├── deploy/nginx.conf       # serves frontend/ and proxies /api/ to the API
+├── docker-compose.yml      # full stack: api + web
+├── .env.example            # WEB_PORT, SECRET_KEY for the compose stack
 ├── index.html              # landing page + API contract
 └── .gitignore
 ```
