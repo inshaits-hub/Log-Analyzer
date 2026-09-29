@@ -1,4 +1,4 @@
-# Insha — Cybersecurity Log Analyzer
+# Cybersecurity Log Analyzer
 
 Senior project: a log-analysis platform that ingests raw server logs, detects
 threats with heuristic rules, and reports the results through both a REST API
@@ -32,7 +32,7 @@ docker compose run --rm cli        # one-shot CLI run
 ## Folder layout
 
 ```text
-insha/
+Cybersecurity Log Analyzer/
 ├── backend/                # see backend/README.md for the full map
 │   ├── src/                # parser, analyzers, threat engine, alerts, reports, API, CLI
 │   ├── tests/              # pytest suite
