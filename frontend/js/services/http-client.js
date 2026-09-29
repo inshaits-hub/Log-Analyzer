@@ -16,18 +16,23 @@
     });
   }
 
+  // Null/undefined/empty values are dropped rather than stringified. The
+  // backend guards optional filters with `if ip:` / `if severity:`, so
+  // sending "null" would be worse than sending nothing: it both escapes
+  // the guard and changes the response versus omitting the parameter.
   function buildQueryString(params) {
     if (!params) {
       return "";
     }
-    var keys = Object.keys(params);
-    if (keys.length === 0) {
-      return "";
-    }
-    var parts = keys.map(function (key) {
-      return encodeURIComponent(key) + "=" + encodeURIComponent(params[key]);
-    });
-    return "?" + parts.join("&");
+    var parts = Object.keys(params)
+      .filter(function (key) {
+        var value = params[key];
+        return value !== null && value !== undefined && value !== "";
+      })
+      .map(function (key) {
+        return encodeURIComponent(key) + "=" + encodeURIComponent(params[key]);
+      });
+    return parts.length === 0 ? "" : "?" + parts.join("&");
   }
 
   window.LogAnalyzer.services.http = {

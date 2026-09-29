@@ -19,8 +19,16 @@
     return value < 10 ? "0" + value : String(value);
   }
 
+  // Every numeric field the backend returns is nullable in principle, and
+  // this is called from ~19 render sites, so it has to be total: a null or
+  // unparseable value must render as "0" rather than throw a TypeError
+  // halfway through building a table and leave it half-rendered.
   function formatNumber(number) {
-    return number.toLocaleString("en-US");
+    var value = Number(number);
+    if (!isFinite(value)) {
+      return (0).toLocaleString("en-US");
+    }
+    return value.toLocaleString("en-US");
   }
 
   function parseTimestamp(value) {
@@ -71,8 +79,21 @@
     return day + " " + month + " " + year + " at " + hours + ":" + minutes;
   }
 
+  // Picks a sensible unit instead of always reporting MB, which made a
+  // 512-byte log line read as "0.0 MB".
   function fileSize(bytes) {
-    var mb = bytes / (1024 * 1024);
+    var value = Number(bytes);
+    if (!isFinite(value) || value < 0) {
+      value = 0;
+    }
+    var kb = value / 1024;
+    if (kb < 1) {
+      return Math.round(value) + " B";
+    }
+    var mb = kb / 1024;
+    if (mb < 1) {
+      return kb.toFixed(1) + " KB";
+    }
     return mb.toFixed(1) + " MB";
   }
 

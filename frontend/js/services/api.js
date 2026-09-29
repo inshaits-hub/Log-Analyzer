@@ -15,14 +15,15 @@
  *
  * GET /threats?ip=&severity=&limit=
  *   Items: {id, type, ip, severity, badge, title, details, timestamp,
- *   risk_score}. There is no attempts/target/first_seen/last_seen field:
- *   alert_manager.py computes those in-memory right after an upload, but
- *   database.py's THREAT_COLUMNS never persists them, so GET /threats can
- *   never return them. "type" is the raw rule key (e.g. SSH_BRUTE_FORCE);
- *   "title" is the ready-made human label for it. "timestamp" is a naive
- *   "YYYY-MM-DD HH:MM:SS" string (space separator, no T, no timezone) that
- *   is already UTC - always read it through LogAnalyzer.core.format.parseTimestamp(),
- *   never with a bare `new Date(...)`, or browsers will parse it as local time.
+ *   risk_score, attempts}. "ip" can be null for threats with no source
+ *   host, so omit the ip parameter entirely for those rather than sending
+ *   an empty one - the backend guards with `if ip:` and would otherwise
+ *   drop the filter and return every recent event. "type" is the raw rule
+ *   key (e.g. SSH_BRUTE_FORCE); "title" is the ready-made human label for
+ *   it. "timestamp" is a naive "YYYY-MM-DD HH:MM:SS" string (space
+ *   separator, no T, no timezone) that is already UTC - always read it
+ *   through LogAnalyzer.core.format.parseTimestamp(), never with a bare
+ *   `new Date(...)`, or browsers will parse it as local time.
  *
  * POST /upload (multipart field name: "file")
  *   Response: {status, filename, parsed_events, threats_detected,
@@ -75,6 +76,10 @@
     return config.USE_MOCK ? mockApi.getEvents(params) : http.request("/events" + http.buildQueryString(params));
   }
 
+  // The real upload deliberately uses XMLHttpRequest instead of fetch():
+  // fetch() has no upload progress events, so options.onProgress (which
+  // the mock branch honours) would simply never fire and the progress bar
+  // would sit at 0% until the response landed, looking like a hang.
   function uploadLogFile(file, options) {
     options = options || {};
 
@@ -85,15 +90,63 @@
     var formData = new FormData();
     formData.append("file", file);
 
-    return fetch(http.BASE_URL + "/upload", {
-      method: "POST",
-      body: formData,
-      signal: options.signal
-    }).then(function (response) {
-      if (!response.ok) {
-        throw new Error("Request to /upload failed with HTTP status " + response.status);
+    return new Promise(function (resolve, reject) {
+      var xhr = new XMLHttpRequest();
+      xhr.open("POST", http.BASE_URL + "/upload");
+
+      xhr.upload.addEventListener("progress", function (event) {
+        if (!event.lengthComputable || typeof options.onProgress !== "function") {
+          return;
+        }
+        options.onProgress(Math.round((event.loaded / event.total) * 100));
+      });
+
+      xhr.addEventListener("load", function () {
+        var body = null;
+        try {
+          body = JSON.parse(xhr.responseText);
+        } catch (parseError) {
+          body = null;
+        }
+
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve(body);
+          return;
+        }
+
+        var message = "Request to /upload failed with HTTP status " + xhr.status;
+        if (body && body.message) {
+          message += ": " + body.message;
+        }
+        var error = new Error(message);
+        error.status = xhr.status;
+        reject(error);
+      });
+
+      xhr.addEventListener("error", function () {
+        reject(new Error("Network error while uploading " + file.name));
+      });
+
+      // Gives the abort the same shape browsers use for an aborted fetch,
+      // so callers detect a user cancel by error.name rather than by
+      // matching an error string.
+      xhr.addEventListener("abort", function () {
+        var error = new Error("Upload cancelled");
+        error.name = "AbortError";
+        reject(error);
+      });
+
+      if (options.signal) {
+        if (options.signal.aborted) {
+          xhr.abort();
+          return;
+        }
+        options.signal.addEventListener("abort", function () {
+          xhr.abort();
+        });
       }
-      return response.json();
+
+      xhr.send(formData);
     });
   }
 

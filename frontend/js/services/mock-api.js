@@ -109,6 +109,15 @@
     return mockResponse({ count: results.length, events: results.slice() });
   }
 
+  // Same contract as the real XHR upload in api.js: a cancelled upload
+  // rejects with an error whose `name` is "AbortError", so callers detect
+  // it by name instead of matching on the message text.
+  function abortError() {
+    var error = new Error("Upload cancelled");
+    error.name = "AbortError";
+    return error;
+  }
+
   function uploadLogFile(file, options) {
     options = options || {};
     var onProgress = options.onProgress;
@@ -140,7 +149,7 @@
             if (failTimer) {
               clearTimeout(failTimer);
             }
-            reject(new Error("Upload cancelled"));
+            reject(abortError());
           });
         }
       });
@@ -177,7 +186,7 @@
         options.signal.addEventListener("abort", function () {
           cancelled = true;
           clearInterval(timer);
-          reject(new Error("Upload cancelled"));
+          reject(abortError());
         });
       }
     });
