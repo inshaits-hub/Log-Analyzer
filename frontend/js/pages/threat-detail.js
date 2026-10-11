@@ -41,7 +41,11 @@
   var logLinesShowing = document.getElementById("detail-log-lines-showing");
   var logLinesBox = document.getElementById("detail-log-lines-box");
   var logLinesShowAll = document.getElementById("detail-log-lines-show-all");
-
+  var copilotSection = document.getElementById("detail-copilot-section");
+  var copilotExplanation = document.getElementById("detail-copilot-explanation");
+  var copilotSteps = document.getElementById("detail-copilot-steps");
+  var copilotCommands = document.getElementById("detail-copilot-commands");
+  var copilotNote = document.getElementById("detail-copilot-note");
   var MAX_LOG_LINES_SHOWN = 6;
   var MAX_TARGET_ACCOUNTS_SHOWN = 5;
 
@@ -147,6 +151,7 @@
     fieldsEl.classList.add("hidden");
     footerEl.classList.add("hidden");
     logLinesSection.classList.add("hidden");
+        hideCopilot();
     currentSelectedItem = null;
   }
 
@@ -308,6 +313,57 @@
       });
   }
 
+    function hideCopilot() {
+    if (copilotSection) {
+      copilotSection.classList.add("hidden");
+    }
+  }
+
+  function renderCopilot(data) {
+    if (!copilotSection || !data) {
+      return;
+    }
+    var playbook = data.playbook || {};
+    copilotExplanation.textContent = data.explanation || "";
+
+    dom.clear(copilotSteps);
+    (playbook.steps || []).forEach(function (step) {
+      var li = document.createElement("li");
+      li.textContent = step;
+      copilotSteps.appendChild(li);
+    });
+
+    dom.clear(copilotCommands);
+    var commands = playbook.commands || [];
+    commands.forEach(function (command) {
+      var line = document.createElement("div");
+      line.textContent = command;
+      copilotCommands.appendChild(line);
+    });
+    copilotCommands.classList.toggle("hidden", commands.length === 0);
+
+    copilotNote.textContent = playbook.note || "";
+    copilotSection.classList.remove("hidden");
+  }
+
+  function loadCopilot(item) {
+    hideCopilot();
+    if (!copilotSection || !api.getCopilot || item.id === null || item.id === undefined) {
+      return;
+    }
+    var requestedId = item.id;
+    api
+      .getCopilot(requestedId)
+      .then(function (data) {
+        if (selectedId !== requestedId) {
+          return;
+        }
+        renderCopilot(data);
+      })
+      .catch(function (error) {
+        console.error(error);
+      });
+  }
   function showFilledPanel(item) {
     emptyBlock.classList.add("hidden");
     headerEl.classList.remove("hidden");
@@ -336,6 +392,7 @@
     targetAccountsEl.textContent = "-";
     logLinesSection.classList.add("hidden");
     loadEventsForThreat(item);
+        loadCopilot(item);
   }
 
   function renderPanel() {
