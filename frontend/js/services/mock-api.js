@@ -112,6 +112,26 @@
   // Same contract as the real XHR upload in api.js: a cancelled upload
   // rejects with an error whose `name` is "AbortError", so callers detect
   // it by name instead of matching on the message text.
+    function getCopilot(id) {
+    if (config.getMockScenario() === "error") {
+      return mockError();
+    }
+    return mockResponse({
+      threat_id: id,
+      analysis: {},
+      explanation: "Mock data: this source made repeated suspicious requests. In live mode the Copilot explains each alert in plain English.",
+      playbook: {
+        steps: [
+          "Confirm the source is not a trusted address.",
+          "Review the related log lines.",
+          "Block the source if the activity is confirmed malicious."
+        ],
+        commands: ["sudo ufw deny from 203.0.113.45 comment 'ThreatNexus: mock'"],
+        warnings: [],
+        note: "Recommendations only - review each command and run it yourself."
+      }
+    });
+  }
   function abortError() {
     var error = new Error("Upload cancelled");
     error.name = "AbortError";
@@ -226,6 +246,7 @@
     getStats: getStats,
     getThreats: getThreats,
     getEvents: getEvents,
+    getCopilot: getCopilot,
     uploadLogFile: uploadLogFile,
     exportReport: exportReport
   };
