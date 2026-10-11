@@ -75,7 +75,10 @@
   function getEvents(params) {
     return config.USE_MOCK ? mockApi.getEvents(params) : http.request("/events" + http.buildQueryString(params));
   }
-
+  function getCopilot(id) {
+    return config.USE_MOCK ? mockApi.getCopilot(id) : http.request("/copilot/" + encodeURIComponent(id));
+  }
+  
   // The real upload deliberately uses XMLHttpRequest instead of fetch():
   // fetch() has no upload progress events, so options.onProgress (which
   // the mock branch honours) would simply never fire and the progress bar
@@ -186,6 +189,7 @@
     getStats: getStats,
     getThreats: getThreats,
     getEvents: getEvents,
+    getCopilot: getCopilot,
     uploadLogFile: uploadLogFile,
     exportReport: exportReport
   };
